@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define MAX 100 /* max value for the size of a pattern */
+
+/****************************************** DYNAMIC ARRAY *********************************************/
 
 /*
  * @brief: This structure maintains the size of the string T and the nr of the occupied spaces in that
@@ -42,6 +45,8 @@ void freeDynamicArray(DynamicArray * array)
 	free(array->T);
 	free(array);
 }
+										   
+/********************************************* COMMAND T *********************************************/
 
 /*
  * @brief: This funtion will read the caracters from the command T and store them into string T of the 
@@ -70,37 +75,101 @@ void readStringT(DynamicArray * array)
 	printf("Array after command T - size: %d occupied: %d T:{%s}\n", array->size, array->occupied, array->T);
 }
 
+/********************************************* COMMAND N *********************************************/
+
+/*
+ * @brief: Naive String Matching algorithm studied in theoretical class number 3.
+ *		   This aproach its takes O(nm) which its not very practical for online string matching.
+ *
+ * @param: T - The string where we want to find the patterns.
+ *	       n - The size of string T.
+ *		   P - The pattern we want to find.
+ *		   m - The size of that pattern.
+ */
+void naiveStringMatching(char * T, int n, char * P, int m)
+{
+	int i;
+	for (i = 0; i + m <= n; i++)
+		if (0 == strncmp(&(T[i]), P, m))
+			printf("%d ", i);
+	puts("");
+}
+
+/*
+ * @brief: Handler for the command N. This function reads the pattern and calls the naiveStringMatching 
+ *		   function.
+ *
+ * @param: receives a DynamicArray pointer that points to the structure that contains the String T where
+ *		   we want to find the pattern.
+ *
+ *	NOTE: This is a more efficient way, because it calculates the size of the pattern while it is being
+ *		  read from the input. 
+ *		  But there is a simpler one in comments. 
+ */
+void commandN(DynamicArray * array)
+{
+	/**************************** Alternative ************************************ 
+
+	char * pattern =  (char *) malloc(sizeof(char) * MAX);
+	scanf("%s", pattern);
+	naiveStringMatching(array->T, array->occupied, pattern, strlen(pattern));
+
+	******************************************************************************/
+
+	char * pattern =  (char *) malloc(sizeof(char) * MAX);
+	int i = 0;
+	char new;
+	
+	while ((new = getchar()) != '\n') 
+		pattern[i++] = new;	
+	pattern[i] = '\0';
+
+	naiveStringMatching(array->T, array->occupied, pattern, i);
+}
+
 int main()
 {
 	char command;
 	DynamicArray * array = NULL;
 	
 	while ((command = getchar()) != 'X') {  /* reads the command and if its X exits the while cycle */
+        
+        getchar(); /* reads the space after the command and the \n of X command */
+        
         switch (command) {
 
-        case 'T':
-        	/* we need to reset the array at every T command and free the memory from the last array*/
-        	if (array != NULL) freeDynamicArray(array);
-        	array = createDynamicArray(); 
+	        case 'T':
 
-        	getchar(); /* reads the space after the command */
-        	readStringT(array);
-        	/* do nothing */
-        	break;
-        case 'N':
-        	/* do nothing */
-            break;
-        case 'K':
-        	/* do nothing */
-            break;
-        case 'B':
-        	/* do nothing */
-            break;
- 		default:
-            printf("ERRO: Comando desconhecido\n");
-        }
+	        	/* we need to reset the array at every T command and free the memory from the last array*/
+	        	if (array != NULL) freeDynamicArray(array);
+	        	array = createDynamicArray();
+	        	readStringT(array);
+	        	break;
 
-        if (command != 'T') getchar(); /* this getchar takes the \n on the end of N, K and B commands */
+	        case 'N':
+	        
+	        	commandN(array);
+	            break;
+
+	        case 'K':
+	        	/* do nothing */
+
+	        	/* eventually every command will need to read the last \n 
+	        	   but while its not implemented this getchar must be here
+	        	*/
+	        	getchar(); 
+	            break;
+	        case 'B':
+	        	/* do nothing */
+
+	        	/* eventually every command will need to read the last \n 
+	        	   but while its not implemented this getchar must be here
+	        	*/
+	        	getchar();
+	            break;
+	 		default:
+	            printf("ERROR: Unknown command\n");
+	    }
     }
 
 	return EXIT_SUCCESS;
