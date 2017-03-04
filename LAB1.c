@@ -2,6 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+/*
+void printIntVec(int * vec, int size)
+{
+	int i;
+	for (i = 0; i < size; i++)
+		printf("%d ", vec[i]);
+	puts("");
+}
+*/
+
 int main()
 {
 	char *vec = (char*) malloc(sizeof(char));
