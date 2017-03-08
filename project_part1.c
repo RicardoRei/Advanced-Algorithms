@@ -12,7 +12,7 @@ typedef struct
 {
 	int size;
 	int occupied;
-	char * T;
+	char * str;
 
 } DynamicArray;
 
@@ -20,56 +20,64 @@ typedef struct
 
 DynamicArray* createDynamicArray();
 void freeDynamicArray(DynamicArray * array);
-void readStringT(DynamicArray * array);
+void readString(DynamicArray * array);
 void naiveStringMatching(char * T, int n, char * P, int m);
 int * computePrefixFunction(char * P, int m);
 void KMP_matcher(char * T, int n, char * P, int m);
-int readPattern(char * pattern);
 
 /*******************************************************************************************************/
+
 int main()
 {
 	char command;
-	DynamicArray * array = NULL;
-	char * pattern =  (char *) malloc(sizeof(char) * MAX);
-	int p_size;
+	DynamicArray * T = NULL;
+	DynamicArray * P = NULL;
 	
 	while ((command = getchar()) != 'X') /* reads the command and if its X exits the while cycle */
 	{  
         getchar(); /* reads the space after the command and the \n of X command */
-        
+
+        if (P != NULL) freeDynamicArray(P);/*P's are recycled every command which means we can free here*/
+		P = createDynamicArray();
+
         switch (command) 
         {
 	        case 'T':
 
 	        	/* we need to reset the array at every T command and free the memory from the last array*/
-	        	if (array != NULL) freeDynamicArray(array);
-	        	array = createDynamicArray();
-	        	readStringT(array);
+	        	if (T != NULL) freeDynamicArray(T);
+	        	T = createDynamicArray();
+	        	readString(T);
 	        	break;
 
 	        case 'N':
-	        	p_size = readPattern(pattern);
-	        	naiveStringMatching(array->T, array->occupied, pattern, p_size);
+	        	readString(P);
+	        	naiveStringMatching(T->str, T->occupied, P->str, P->occupied);
 	            break;
 
 	        case 'K':
-	        	p_size = readPattern(pattern);
-	        	KMP_matcher(array->T, array->occupied, pattern, p_size);
+	        	readString(P);
+	        	KMP_matcher(T->str, T->occupied, P->str, P->occupied);
 	        	break;
 
 	        case 'B':
-	        	p_size = readPattern(pattern);
+	        	readString(P);
+	        	/* BOYES MOORE FUNCTION SHOULD BE HERE*/
+	        	freeDynamicArray(P);
 	            break;
 
 	 		default:
 	            printf("ERROR: Unknown command\n");
 	    }
     }
+    /* free memory for T and P */
+    if (T != NULL) freeDynamicArray(T); 
+    if (P != NULL) freeDynamicArray(P); 
+	
 	return EXIT_SUCCESS;
 }
 
-/******************************************** DYNAMIC ARRAY **********************************************/
+/******************************************** DYNAMIC ARRAY ********************************************/
 
 /*
  * @brief: This function creates an DynamicArray structure and it initializes the field values.
@@ -79,7 +87,7 @@ int main()
 DynamicArray* createDynamicArray()
 {
 	DynamicArray * array = (DynamicArray *) malloc(sizeof(DynamicArray));
-	array->T = (char *) malloc(sizeof(char)); /* string T is initialized with size for only 1 char */
+	array->str = (char *) malloc(sizeof(char)); /* string T is initialized with size for only 1 char */
 	array->size = 1;
 	array->occupied = 0;
 	return array;
@@ -95,11 +103,11 @@ DynamicArray* createDynamicArray()
  */
 void freeDynamicArray(DynamicArray * array)
 {
-	free(array->T);
+	free(array->str);
 	free(array);
 }
 										   
-/********************************************* COMMAND T *********************************************/
+/********************************************* COMMAND T **********************************************/
 
 /*
  * @brief: This funtion will read the caracters from the command T and store them into string T of the 
@@ -108,7 +116,7 @@ void freeDynamicArray(DynamicArray * array)
  *
  * @param: it receives a pointer to the Structure were its going to store the string.
  */
-void readStringT(DynamicArray * array)
+void readString(DynamicArray * array)
 {
 	char new = getchar();
 
@@ -118,17 +126,15 @@ void readStringT(DynamicArray * array)
 		if (array->occupied == array->size)
 		{
 			array->size = 2*array->size;
-			array->T = (char *) realloc(array->T, array->size);
+			array->str = (char *) realloc(array->str, array->size);
 		}
 
-		array->T[array->occupied++] = new;
+		array->str[array->occupied++] = new;
 		new = getchar();
 	}
-
-	printf("Array after command T - size: %d occupied: %d T:{%s}\n", array->size, array->occupied, array->T);
 }
 
-/********************************************* COMMAND N *********************************************/
+/********************************************* COMMAND N **********************************************/
 
 /*
  * @brief: Naive String Matching algorithm studied in theoretical class number 3.
@@ -148,7 +154,7 @@ void naiveStringMatching(char * T, int n, char * P, int m)
 	puts("");
 }
 
-/********************************************* COMMAND k *********************************************/
+/********************************************* COMMAND K **********************************************/
 
 /*
  * @brief: Computes the prefix function. Based on the pseudocode from cap 32.4 from Intruduction to 
@@ -188,7 +194,7 @@ int * computePrefixFunction(char * P, int m)
 void KMP_matcher(char * T, int n, char * P, int m)
 {
 	int * pi = computePrefixFunction(P, m);
-	int i, q = -1;
+	int i, q = -1, count = 0; /* counter not being used yet... */
 	
 	for (i = 0; i < n ; i++)
 	{	
@@ -199,16 +205,17 @@ void KMP_matcher(char * T, int n, char * P, int m)
 		if ( P[q + 1] == T[i] )
 			q++;
 		
+		
 		if ( q == m -1)
 		{
 			printf("%d ", i - q);
 			q = pi[q];
 		}	
 	}
-	puts("");
+	printf("\n%d\n", count);
 }
 
-/********************************************** AUXILIAR  *********************************************/
+/********************************************** AUXILIAR  ***********************************************/
 
 /*
  * @brief: This function reads the pattern from the standard input.
