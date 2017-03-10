@@ -26,6 +26,11 @@ int * computePrefixFunction(char * P, int m);
 void KMP_matcher(char * T, int n, char * P, int m);
 int readPattern(char * pattern);
 
+
+int max(int a, int b, int c);
+int * computeRightmost(char * P, int m);
+void Boyer_Moore_matcher(char * T, int n, char * P, int m);
+
 /*******************************************************************************************************/
 int main()
 {
@@ -177,6 +182,81 @@ int * computePrefixFunction(char * P, int m)
 	return pi;
 }
 
+
+/*
+ * @brief: returns the maximum between 3 numbers.
+ * Clearly not optimized!!	
+ */
+int max(int a, int b, int c){
+
+	if ((a > b) && (a > c))
+		return a;
+
+	if ((a>b) && (a<c))
+		return c;
+
+	if ((a<b) && (b<c))
+		return c;
+
+	if ((a<b) && (b>c))
+		return b;
+}
+
+
+
+/*
+ * @brief: Computes the rightmost ocurrences of the letters in the pattern.
+ *
+ * @param: P is the pointer to the buffer that contains the pattern and m is the size of it.
+ *
+ * @return: returns a vector.
+ */
+int * computeRightmost(char * P, int m){
+	int * rightmost =  (int *) malloc(sizeof(int) * 4); /*ATCG*/
+	int found=0;
+	int i;
+
+
+	rightmost[0]=0;
+	rightmost[1]=0;
+	rightmost[2]=0;
+	rightmost[3]=0;
+
+
+
+	for ( i=m-1; i>=0; i--){
+		switch (P[i]) 
+        {
+	        case 'A':
+	        	if (rightmost[0]==0){
+	        		rightmost[0]=i;
+	        		found++;
+	        	}
+	        case 'T':
+	        	if (rightmost[1]==0){
+	        		rightmost[1]=i;
+	        		found++;
+	        	}
+	        case 'C':
+	        	if (rightmost[2]==0){
+	        		rightmost[2]=i;	
+	        		found++;
+	        	}
+	        case 'G':
+	        	if (rightmost[3]==0){
+	    	        rightmost[3]=i;
+	    	        found++;		
+	    	    }		
+		}
+
+		if (found == 4)
+			return rightmost;
+	}
+	return rightmost;
+}
+
+
+
 /*
  * @brief: Knuth-Morris-Pratt Algorithm based in cap 32.4 from Intruduction to Algorithms (CLRS 3rd edition).
  *
@@ -207,6 +287,62 @@ void KMP_matcher(char * T, int n, char * P, int m)
 	}
 	puts("");
 }
+/*
+ * @brief: BoyerMoore Algorithm based in cap 32.4 from Intruduction to Algorithms (CLRS 3rd edition).
+ *
+ * @param: T - The string where we want to find the patterns.
+ *	       m - The size of string T.
+ *		   P - The pattern we want to find.
+ *		   n - The size of that pattern.
+ */
+void Boyer_Moore_matcher(char * T, int m, char * P, int n)
+{
+	/*PreProcessing*/
+	int * rightmost = computeRightmost(P, n);
+	int rightVal;
+	/*Missing L(i) and l(i)*/
+
+
+	int k = n;
+	while (k <= m){
+		int i = n;
+		int h = k;
+
+		while (i > 0 && (P[i] == T[h])){
+			i--;
+			h--;
+		}
+
+		if (i==0){
+			printf("%d ", k);
+			k = k + n ; /*l'(2);*/
+		}
+
+		else{
+
+
+			switch(T[k])
+			{
+				case 'A':
+					rightVal=rightmost[0];
+				case 'T':
+					rightVal=rightmost[1];
+				case 'C':
+					rightVal=rightmost[2];
+				case 'G':
+					rightVal=rightmost[3];	
+			}
+
+
+			/*int shift=max(i-rightVal,rule2,1); pg17*/
+		}
+	}
+}
+
+
+
+
+
 
 /********************************************** AUXILIAR  *********************************************/
 
