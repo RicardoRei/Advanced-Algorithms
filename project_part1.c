@@ -29,6 +29,10 @@ void KMP_matcher(char * T, int n, char * P, int m);
 int max(int a, int b, int c);
 int * computeRightmost(char * P, int m);
 void Boyer_Moore_matcher(char * T, int n, char * P, int m);
+char * reverseString(char * P, int n);
+int * z_based_BoyerMoore(char * P, int n);
+int * preProcessingDetail(char * P, int n);
+
 
 /*******************************************************************************************************/
 
@@ -67,6 +71,7 @@ int main()
 
 	        case 'B':
 	        	readString(P);
+	        	preProcessingDetail(P->str,P->occupied);
 	        	/* BOYES MOORE FUNCTION SHOULD BE HERE*/
 	        	freeDynamicArray(P);
 	            break;
@@ -206,6 +211,8 @@ int max(int a, int b, int c){
 
 	if ((a<b) && (b>c))
 		return b;
+
+	return 0;
 }
 
 
@@ -222,13 +229,10 @@ int * computeRightmost(char * P, int m){
 	int found=0;
 	int i;
 
-
 	rightmost[0]=0;
 	rightmost[1]=0;
 	rightmost[2]=0;
 	rightmost[3]=0;
-
-
 
 	for ( i=m-1; i>=0; i--){
 		switch (P[i]) 
@@ -294,6 +298,79 @@ void KMP_matcher(char * T, int n, char * P, int m)
 	}
 	printf("\n%d\n", count);
 }
+
+/*
+ * @brief: Calculates table L'()
+ */
+int * z_based_BoyerMoore(char * P, int n)
+{
+	int * L_Prime = (int *) malloc(sizeof(int) * n);
+	char * reversedPattern = reverseString(P,n);
+	int * zBasedOnReverse = computePrefixFunction(reversedPattern,n);
+
+	int i,j;
+
+	for (i = 0; i < n ; i++){
+		L_Prime[i] = 0;
+	}
+
+	for (j = 0; j < n-1 ; j++){
+		i = n - zBasedOnReverse[j] + 1;
+		L_Prime[i] = j;
+	}
+
+	return L_Prime;
+}
+
+
+
+int * preProcessingDetail(char * P, int n)
+{
+	int * l_Prime = (int *) malloc(sizeof(int) * n);	
+	int i, suffixSize, j,len;
+
+	for (i = n-1; i > 0 ; i--)
+	{
+		suffixSize = n-i;
+		len=0;
+		for (j=0; j < suffixSize;j++)
+		{
+			
+			
+			if (P[j]==P[j+i])
+			{
+				len++;
+			}
+			else
+				break;
+		}
+		
+
+		l_Prime[n-i]=len;
+	}
+
+	return l_Prime;
+}
+
+
+
+/*
+ * @brief: reverses a string
+ */
+char * reverseString(char * P, int n)
+{
+	int i;
+	char *str = (char *) malloc(sizeof(char) * n);
+
+	for (i = 0; i < n ; i++){
+		str[n-i-1]=P[i];
+	}
+
+	return str;
+}
+
+
+
 /*
  * @brief: BoyerMoore Algorithm based in cap 32.4 from Intruduction to Algorithms (CLRS 3rd edition).
  *
@@ -305,9 +382,12 @@ void KMP_matcher(char * T, int n, char * P, int m)
 void Boyer_Moore_matcher(char * T, int m, char * P, int n)
 {
 	/*PreProcessing*/
-	int * rightmost = computeRightmost(P, n);
+	int * rightmost = computeRightmost(P,n);
+	int * L_Prime = z_based_BoyerMoore(P,n);
+
 	int rightVal;
-	/*Missing L(i) and l(i)*/
+
+	/*Missing l(i)*/
 
 
 	int k = n;
@@ -316,6 +396,7 @@ void Boyer_Moore_matcher(char * T, int m, char * P, int n)
 		int h = k;
 
 		while (i > 0 && (P[i] == T[h])){
+			/*Comparing counter should be here*/
 			i--;
 			h--;
 		}
@@ -326,7 +407,6 @@ void Boyer_Moore_matcher(char * T, int m, char * P, int n)
 		}
 
 		else{
-
 
 			switch(T[k])
 			{
