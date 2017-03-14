@@ -71,8 +71,8 @@ int main()
 
 	        case 'B':
 	        	readString(P);
+	        	/*Boyer_Moore_matcher(T->str, T->occupied, P->str, P->occupied);*/
 	        	preProcessingDetail(P->str,P->occupied);
-	        	/* BOYES MOORE FUNCTION SHOULD BE HERE*/
 	        	freeDynamicArray(P);
 	            break;
 
@@ -236,27 +236,31 @@ int * computeRightmost(char * P, int m){
 
 	for ( i=m-1; i>=0; i--){
 		switch (P[i]) 
-        {
-	        case 'A':
+		{
+	        case 'A' :
 	        	if (rightmost[0]==0){
 	        		rightmost[0]=i;
 	        		found++;
 	        	}
+	        	break;
 	        case 'T':
 	        	if (rightmost[1]==0){
 	        		rightmost[1]=i;
 	        		found++;
 	        	}
+	        	break;
 	        case 'C':
 	        	if (rightmost[2]==0){
 	        		rightmost[2]=i;	
 	        		found++;
 	        	}
+	        	break;
 	        case 'G':
 	        	if (rightmost[3]==0){
 	    	        rightmost[3]=i;
 	    	        found++;		
 	    	    }		
+	        	break;
 		}
 
 		if (found == 4)
@@ -306,47 +310,91 @@ int * z_based_BoyerMoore(char * P, int n)
 {
 	int * L_Prime = (int *) malloc(sizeof(int) * n);
 	char * reversedPattern = reverseString(P,n);
+
 	int * zBasedOnReverse = computePrefixFunction(reversedPattern,n);
 
-	int i,j;
+
+	int i,j,a;
 
 	for (i = 0; i < n ; i++){
 		L_Prime[i] = 0;
 	}
 
 	for (j = 0; j < n-1 ; j++){
-		i = n - zBasedOnReverse[j] + 1;
-		L_Prime[i] = j;
+		i = n - zBasedOnReverse[j] + 1; /* estes prefixos podem dar -1 ?*/
+		if(i>=0 && i<n){
+			L_Prime[i] = j;
+		}
+	}
+
+	for(a=0;a<n;a++){
+		printf("L'(%d): %d \n",a,L_Prime[a]);
 	}
 
 	return L_Prime;
 }
 
 
+int is_prefix(char *word, int wordlen, int pos) {
+    int i;
+    int suffixlen = wordlen - pos;
 
+    for (i = 0; i < suffixlen; i++) {
+        if (word[i] != word[pos+i]) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+/*
+ * @brief: Calculates table l'()
+ */
 int * preProcessingDetail(char * P, int n)
 {
 	int * l_Prime = (int *) malloc(sizeof(int) * n);	
-	int i, suffixSize, j,len;
-
-	for (i = n-1; i > 0 ; i--)
-	{
-		suffixSize = n-i;
-		len=0;
-		for (j=0; j < suffixSize;j++)
-		{
-			
-			
-			if (P[j]==P[j+i])
-			{
-				len++;
-			}
-			else
-				break;
-		}
+	int i, j,a,largestLength;
+	char * pattern = (char *)malloc(sizeof(char) * n);
+/*
+	for (i=0; i<n;i++){
 		
+		len=0;
 
-		l_Prime[n-i]=len;
+		for(j=i+1;j<n-i;j++){
+			strcpy(pattern, P+i);
+			printf("Checking if there is a suffix from position %d forward, inside pattern %s\n",j,pattern);
+			if (is_prefix(pattern,n-i,j)){
+				len=n-i-j;
+				printf("Found match, len:%d \n",len);
+				break;
+			}
+		}
+		l_Prime[i]=len;
+	}
+*/
+	for (i=0;i<n;i++){
+
+		strcpy(pattern, P+i); /*Pattern of size n-i*/
+		largestLength=0;
+
+		j=1;
+		while (1){
+			if (is_prefix(pattern,n-i,j)){
+				largestLength=n-i-j;
+				break;
+			}
+			else if(j>n){
+				break;
+			}
+			else{
+				j++;
+			}
+		}	
+		l_Prime[i]=largestLength;
+	}	
+
+	for(a=0;a<n;a++){
+		printf("l'(%d), %d \n",a,l_Prime[a]);
 	}
 
 	return l_Prime;
@@ -382,48 +430,77 @@ char * reverseString(char * P, int n)
 void Boyer_Moore_matcher(char * T, int m, char * P, int n)
 {
 	/*PreProcessing*/
+	int a,rightVal, delta2, comparator;
 	int * rightmost = computeRightmost(P,n);
+	printf("rightmost A: %d \n",rightmost[0]);
+	printf("rightmost T: %d \n",rightmost[1]);
+	printf("rightmost C: %d \n",rightmost[2]);
+	printf("rightmost G: %d \n",rightmost[3]);
+	fflush(stdout);
+
+
+
 	int * L_Prime = z_based_BoyerMoore(P,n);
-
-	int rightVal;
-
-	/*Missing l(i)*/
+	
 
 
+	int * l_Prime = preProcessingDetail(P,n);
+	
+
+	fflush(stdout);
+
+
+	/*How to debug?*/
+	/*Gonna print tables?*/
+	/*
 	int k = n;
+	comparator = 0;
 	while (k <= m){
+		printf("k:%d, m:%d\n",k,m);
 		int i = n;
 		int h = k;
 
 		while (i > 0 && (P[i] == T[h])){
-			/*Comparing counter should be here*/
+			comparator++;
 			i--;
 			h--;
 		}
 
 		if (i==0){
-			printf("%d ", k);
-			k = k + n ; /*l'(2);*/
+			printf("matches: %d \n", k);
+			k = k + n - l_Prime[2];
 		}
-
 		else{
 
 			switch(T[k])
 			{
 				case 'A':
 					rightVal=rightmost[0];
+					printf("set rightval using A\n");
+					break;
 				case 'T':
 					rightVal=rightmost[1];
+					printf("set rightval using T\n");
+					break;
 				case 'C':
 					rightVal=rightmost[2];
+					printf("set rightval using C\n");
+					break;
 				case 'G':
-					rightVal=rightmost[3];	
+					rightVal=rightmost[3];
+					printf("set rightval using G\n");
+					break;	
 			}
 
+			delta2 = L_Prime[i];
+			if (delta2 == 0){
+				delta2 = l_Prime[i];
+			}
 
-			/*int shift=max(i-rightVal,rule2,1); pg17*/
+			k = max(i-rightVal,delta2,1);
 		}
 	}
+	printf("compared: %d\n", comparator);*/
 }
 
 
