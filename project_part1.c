@@ -331,6 +331,9 @@ int * z_based_BoyerMoore(char * P, int n)
 		printf("L'(%d): %d \n",a,L_Prime[a]);
 	}
 
+	free(reversedPattern);
+	free(zBasedOnReverse);
+
 	return L_Prime;
 }
 
@@ -355,23 +358,7 @@ int * preProcessingDetail(char * P, int n)
 	int * l_Prime = (int *) malloc(sizeof(int) * n);	
 	int i, j,a,largestLength;
 	char * pattern = (char *)malloc(sizeof(char) * n);
-/*
-	for (i=0; i<n;i++){
-		
-		len=0;
 
-		for(j=i+1;j<n-i;j++){
-			strcpy(pattern, P+i);
-			printf("Checking if there is a suffix from position %d forward, inside pattern %s\n",j,pattern);
-			if (is_prefix(pattern,n-i,j)){
-				len=n-i-j;
-				printf("Found match, len:%d \n",len);
-				break;
-			}
-		}
-		l_Prime[i]=len;
-	}
-*/
 	for (i=0;i<n;i++){
 
 		strcpy(pattern, P+i); /*Pattern of size n-i*/
@@ -396,6 +383,8 @@ int * preProcessingDetail(char * P, int n)
 	for(a=0;a<n;a++){
 		printf("l'(%d), %d \n",a,l_Prime[a]);
 	}
+
+	free(pattern);
 
 	return l_Prime;
 }
@@ -501,6 +490,9 @@ void Boyer_Moore_matcher(char * T, int m, char * P, int n)
 		}
 	}
 	printf("compared: %d\n", comparator);*/
+	free(rightmost);
+	free(L_Prime);
+	free(l_Prime);
 }
 
 
