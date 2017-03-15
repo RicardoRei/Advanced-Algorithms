@@ -71,8 +71,7 @@ int main()
 
 	        case 'B':
 	        	readString(P);
-	        	/*Boyer_Moore_matcher(T->str, T->occupied, P->str, P->occupied);*/
-	        	preProcessingDetail(P->str,P->occupied);
+	        	Boyer_Moore_matcher(T->str, T->occupied, P->str, P->occupied);
 	        	freeDynamicArray(P);
 	            break;
 
@@ -177,19 +176,18 @@ void naiveStringMatching(char * T, int n, char * P, int m)
 int * computePrefixFunction(char * P, int m)
 {
 	int * pi = (int *) malloc(sizeof(int) * m);
-	int q, k = -1;
-	pi[0] = k;
+	int i,j;
+	j=0;
+    for (i = 1; i < m; i++) {
+        
+        while (j > 0 && P[j] != P[i])
+            j = pi[j-1];
 
-	for (q = 1; q < m; q++)
-	{
-		while ( k > -1 && P[k+1] != P[q] )
-			k = pi[k];
-		
-		if (P[k+1] == P[q])
-			k++;
-		
-		pi[q] = k;
-	}
+        if (P[j] == P[i])
+            j++;
+        pi[i] = j;
+    }   
+
 	return pi;
 }
 
@@ -200,19 +198,21 @@ int * computePrefixFunction(char * P, int m)
  */
 int max(int a, int b, int c){
 
-	if ((a > b) && (a > c))
+	if (a >= b && a >= c)
 		return a;
-
-	if ((a>b) && (a<c))
+	
+	else if (a>=b && a<=c)
 		return c;
-
-	if ((a<b) && (b<c))
+	
+	else if (a<=b && b<=c)
 		return c;
-
-	if ((a<b) && (b>c))
+	
+	else if (a<=b && b>=c)
 		return b;
-
-	return 0;
+	
+	else 
+		return 0;
+	
 }
 
 
@@ -266,6 +266,13 @@ int * computeRightmost(char * P, int m){
 		if (found == 4)
 			return rightmost;
 	}
+
+	
+	printf("A:%d\n",rightmost[0]);
+	printf("T:%d\n",rightmost[1]);
+	printf("C:%d\n",rightmost[2]);
+	printf("G:%d\n",rightmost[3]);
+	
 	return rightmost;
 }
 
@@ -301,6 +308,7 @@ void KMP_matcher(char * T, int n, char * P, int m)
 		}	
 	}
 	printf("\n%d\n", count);
+	free(pi);
 }
 
 /*
@@ -321,7 +329,7 @@ int * z_based_BoyerMoore(char * P, int n)
 	}
 
 	for (j = 0; j < n-1 ; j++){
-		i = n - zBasedOnReverse[j] + 1; /* estes prefixos podem dar -1 ?*/
+		i = n - zBasedOnReverse[j] + 1; 
 		if(i>=0 && i<n){
 			L_Prime[i] = j;
 		}
@@ -380,11 +388,12 @@ int * preProcessingDetail(char * P, int n)
 		l_Prime[i]=largestLength;
 	}	
 
-	for(a=0;a<n;a++){
-		printf("l'(%d), %d \n",a,l_Prime[a]);
-	}
 
 	free(pattern);
+
+	for(a=0;a<n;a++){
+		printf("l'(%d): %d \n",a,l_Prime[a]);
+	}
 
 	return l_Prime;
 }
@@ -419,77 +428,68 @@ char * reverseString(char * P, int n)
 void Boyer_Moore_matcher(char * T, int m, char * P, int n)
 {
 	/*PreProcessing*/
-	int a,rightVal, delta2, comparator;
+	int badCharShift,comparator,goodSuffixShift;
+
 	int * rightmost = computeRightmost(P,n);
-	printf("rightmost A: %d \n",rightmost[0]);
-	printf("rightmost T: %d \n",rightmost[1]);
-	printf("rightmost C: %d \n",rightmost[2]);
-	printf("rightmost G: %d \n",rightmost[3]);
-	fflush(stdout);
-
-
-
 	int * L_Prime = z_based_BoyerMoore(P,n);
-	
-
-
 	int * l_Prime = preProcessingDetail(P,n);
 	
-
-	fflush(stdout);
-
-
-	/*How to debug?*/
-	/*Gonna print tables?*/
-	/*
-	int k = n;
+	int i,h,k;
+	k = n;
 	comparator = 0;
 	while (k <= m){
 		printf("k:%d, m:%d\n",k,m);
-		int i = n;
-		int h = k;
+		i = n-1;
+		h = k-1;
 
-		while (i > 0 && (P[i] == T[h])){
+		printf("i:%d, h:%d, P[i]= %c, T[h]= %c\n",i,h,P[i],T[h]);
+
+		while (i >= 0 && (P[i] == T[h])){
+			printf("still inside pattern and matched letters\n");
 			comparator++;
 			i--;
 			h--;
 		}
 
-		if (i==0){
-			printf("matches: %d \n", k);
-			k = k + n - l_Prime[2];
+
+		if (i==-1){
+			printf("match starting in position: %d \n", (k-1)-(n-1));  /*match found*/
+			k = k + n -1- l_Prime[1];
 		}
 		else{
-
+			printf("dont match\n");
 			switch(T[k])
 			{
 				case 'A':
-					rightVal=rightmost[0];
-					printf("set rightval using A\n");
+					badCharShift=rightmost[0];
 					break;
 				case 'T':
-					rightVal=rightmost[1];
-					printf("set rightval using T\n");
+					badCharShift=rightmost[1];
 					break;
 				case 'C':
-					rightVal=rightmost[2];
-					printf("set rightval using C\n");
+					badCharShift=rightmost[2];
 					break;
 				case 'G':
-					rightVal=rightmost[3];
-					printf("set rightval using G\n");
+					badCharShift=rightmost[3];
 					break;	
 			}
+			printf("badCharShift: %d\n",badCharShift);
 
-			delta2 = L_Prime[i];
-			if (delta2 == 0){
-				delta2 = l_Prime[i];
+			if ((P[i-1]!= T[h]) && L_Prime[i]>0){
+				goodSuffixShift = n -1-L_Prime[i];
+				printf("setting with 1st rule, goodSuffixShift: %d\n",goodSuffixShift);
 			}
 
-			k = max(i-rightVal,delta2,1);
+			else if (L_Prime[i]==0){
+				goodSuffixShift = n -1- l_Prime[i];
+				printf("setting with 2nd rule, goodSuffixShift: %d\n",goodSuffixShift);
+			}
+
+			k = k + max(1,i-badCharShift,goodSuffixShift);
+			printf("new k = %d\n",k);
 		}
 	}
-	printf("compared: %d\n", comparator);*/
+	printf("compared: %d\n", comparator);
 	free(rightmost);
 	free(L_Prime);
 	free(l_Prime);
