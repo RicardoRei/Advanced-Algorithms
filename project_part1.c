@@ -33,6 +33,8 @@ char * reverseString(char * P, int n);
 int * z_based_BoyerMoore(char * P, int n);
 int * preProcessingDetail(char * P, int n);
 
+int * computeZfunction(char * P, int n);
+
 
 /*******************************************************************************************************/
 
@@ -71,7 +73,9 @@ int main()
 
 	        case 'B':
 	        	readString(P);
-	        	Boyer_Moore_matcher(T->str, T->occupied, P->str, P->occupied);
+	        	z_based_BoyerMoore(P->str, P->occupied);
+	        	//computeZfunction(P->str, P->occupied);
+	        	//Boyer_Moore_matcher(T->str, T->occupied, P->str, P->occupied);
 	        	freeDynamicArray(P);
 	            break;
 
@@ -216,6 +220,28 @@ int max(int a, int b, int c){
 }
 
 
+int * computeZfunction(char * P, int n)
+{
+	int * Z = (int *) malloc(sizeof(int)*n);
+	int i, count = 0;
+
+	Z[0] = 0;
+	for(i = 1; i < n; i++)
+	{
+		while (P[i + count] == P[count]) { count++; }
+		Z[i] = count;
+		count = 0;
+	}
+
+	printf("Z: ");
+	for(i = 0; i < n; i++)
+	{
+		printf("%d ", Z[i]);
+	}
+	puts("");
+	return Z;
+}
+
 
 /*
  * @brief: Computes the rightmost ocurrences of the letters in the pattern.
@@ -317,16 +343,28 @@ void KMP_matcher(char * T, int n, char * P, int m)
 int * z_based_BoyerMoore(char * P, int n)
 {
 	int * L_Prime = (int *) malloc(sizeof(int) * n);
-	char * reversedPattern = reverseString(P,n);
-
-	int * zBasedOnReverse = computePrefixFunction(reversedPattern,n);
-
-
+	char * reversedPattern = reverseString(P, n);
+	int * z_reversed = computeZfunction(reversedPattern, n);
+	int * N = (int *) malloc(sizeof(int) * n);
 	int i,j,a;
 
-	for (i = 0; i < n ; i++){
+	for (i = 0; i < n; i++)
+	{
+		N[i] = z_reversed[n-i];
+	}
+
+	printf("N: ");
+	for(i = 0; i < n; i++)
+	{
+		printf("%d ", N[i]);
+	}
+	puts("");
+
+	/*for (i = 0; i < n ; i++){
 		L_Prime[i] = 0;
 	}
+
+
 
 	for (j = 0; j < n-1 ; j++){
 		i = n - zBasedOnReverse[j] + 1; 
@@ -341,8 +379,8 @@ int * z_based_BoyerMoore(char * P, int n)
 
 	free(reversedPattern);
 	free(zBasedOnReverse);
-
-	return L_Prime;
+	*/
+	return N;
 }
 
 
