@@ -32,7 +32,9 @@ void Boyer_Moore_matcher(char * T, int n, char * P, int m);
 char * reverseString(char * P, int n);
 int * z_based_BoyerMoore(char * P, int n);
 int * preProcessingDetail(char * P, int n);
+
 int * computeZarray(char * P, int m);
+
 
 /*******************************************************************************************************/
 
@@ -71,7 +73,7 @@ int main()
 
 	        case 'B':
 	        	readString(P);
-	        	Boyer_Moore_matcher(T->str, T->occupied, P->str, P->occupied);
+	        	z_based_BoyerMoore(P->str, P->occupied);
 	        	freeDynamicArray(P);
 	            break;
 
@@ -256,7 +258,6 @@ int max(int a, int b, int c){
 }
 
 
-
 /*
  * @brief: Computes the rightmost ocurrences of the letters in the pattern.
  *
@@ -373,6 +374,10 @@ int * z_based_BoyerMoore(char * P, int n)
 		N[j] = zBasedOnReverse[n-j];
 	}
 
+	for(a=0;a<n;a++){
+		printf("N(%d): %d \n",a,N[a]);
+	}
+
 	for (i = 0; i < n ; i++){
 		L_Prime[i] = 0;
 	}
@@ -392,8 +397,8 @@ int * z_based_BoyerMoore(char * P, int n)
 	free(reversedPattern);
 	free(N);
 	free(zBasedOnReverse);
-
-	return L_Prime;
+	
+	return N;
 }
 
 
