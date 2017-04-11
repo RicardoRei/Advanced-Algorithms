@@ -32,7 +32,7 @@ void Boyer_Moore_matcher(char * T, int n, char * P, int m);
 char * reverseString(char * P, int n);
 int * z_based_BoyerMoore(char * P, int n);
 int * preProcessingDetail(char * P, int n);
-
+int * computeZarray(char * P, int m);
 
 /*******************************************************************************************************/
 
@@ -176,7 +176,7 @@ void naiveStringMatching(char * T, int n, char * P, int m)
 int * computePrefixFunction(char * P, int m)
 {
 	int * pi = (int *) malloc(sizeof(int) * m);
-	int i,j;
+	int i,j,a;
 	j=0;
     for (i = 1; i < m; i++) {
         
@@ -188,6 +188,10 @@ int * computePrefixFunction(char * P, int m)
         pi[i] = j;
     }   
 
+    for(a=0;a<m;a++){
+		printf("Pi'(%d): %d \n",a,pi[a]);
+	} /*WORKS ACCORDING TO STACKOVERFLOW*/
+	
 	return pi;
 }
 
@@ -196,6 +200,42 @@ int * computePrefixFunction(char * P, int m)
  * @brief: returns the maximum between 3 numbers.
  * Clearly not optimized!!	
  */
+
+int * computeZarray(char * P, int m) /*confirmed*/
+{
+    int L, R, k,i;
+    int * Z = (int *) malloc(sizeof(int) * m);
+
+    L = R = 0;
+    for (i=1; i < m; ++i)
+    {
+        if (i > R)
+        {
+            L = R = i;
+            while (R<m && P[R-L] == P[R])
+                R++;
+            Z[i] = R-L;
+            R--;
+        }
+        else
+        {
+            k = i-L;
+            if (Z[k] < R-i+1)
+                 Z[i] = Z[k];
+            else
+            {
+                L = i;
+                while (R<m && P[R-L] == P[R])
+                    R++;
+                Z[i] = R-L;
+                R--;
+            }
+        }
+    }
+
+    return Z;
+}
+
 int max(int a, int b, int c){
 
 	if (a >= b && a >= c)
@@ -288,8 +328,10 @@ int * computeRightmost(char * P, int m){
  */
 void KMP_matcher(char * T, int n, char * P, int m)
 {
+
 	int * pi = computePrefixFunction(P, m);
-	int i, q = -1, count = 0; /* counter not being used yet... */
+
+	int i, q = -1, count = 0; /* test counter... */
 	
 	for (i = 0; i < n ; i++)
 	{	
@@ -297,17 +339,19 @@ void KMP_matcher(char * T, int n, char * P, int m)
 		while ( q > -1 && P[q+1] != T[i])
 			q = pi[q];
 
-		if ( P[q + 1] == T[i] )
+		if ( P[q + 1] == T[i] ){
+			count++;
 			q++;
+		}
 		
 		
 		if ( q == m -1)
 		{
-			printf("%d ", i - q);
+			printf("%d", i - q);
 			q = pi[q];
 		}	
 	}
-	printf("\n%d\n", count);
+	printf("%d\n", count);
 	free(pi);
 }
 
@@ -318,28 +362,35 @@ int * z_based_BoyerMoore(char * P, int n)
 {
 	int * L_Prime = (int *) malloc(sizeof(int) * n);
 	char * reversedPattern = reverseString(P,n);
+	int * N = (int *) malloc(sizeof(int) * n);
 
-	int * zBasedOnReverse = computePrefixFunction(reversedPattern,n);
-
-
+	int * zBasedOnReverse = computeZarray(reversedPattern,n);
 	int i,j,a;
+
+	N[0]=0;
+
+	for (j=1;j<n;j++){
+		N[j] = zBasedOnReverse[n-j];
+	}
 
 	for (i = 0; i < n ; i++){
 		L_Prime[i] = 0;
 	}
 
 	for (j = 0; j < n-1 ; j++){
-		i = n - zBasedOnReverse[j] + 1; 
+		i = n - N[j] + 1; 
 		if(i>=0 && i<n){
 			L_Prime[i] = j;
 		}
 	}
+
 
 	for(a=0;a<n;a++){
 		printf("L'(%d): %d \n",a,L_Prime[a]);
 	}
 
 	free(reversedPattern);
+	free(N);
 	free(zBasedOnReverse);
 
 	return L_Prime;
@@ -428,13 +479,14 @@ char * reverseString(char * P, int n)
 void Boyer_Moore_matcher(char * T, int m, char * P, int n)
 {
 	/*PreProcessing*/
-	int badCharShift,comparator,goodSuffixShift;
+	int badCharShift,comparator,goodSuffixShift,shift;
 
 	int * rightmost = computeRightmost(P,n);
 	int * L_Prime = z_based_BoyerMoore(P,n);
 	int * l_Prime = preProcessingDetail(P,n);
+
 	
-	int i,h,k;
+	int i,h,k,rightmostPosition;
 	k = n;
 	comparator = 0;
 	while (k <= m){
@@ -442,51 +494,54 @@ void Boyer_Moore_matcher(char * T, int m, char * P, int n)
 		i = n-1;
 		h = k-1;
 
-		printf("i:%d, h:%d, P[i]= %c, T[h]= %c\n",i,h,P[i],T[h]);
-
-		while (i >= 0 && (P[i] == T[h])){
-			printf("still inside pattern and matched letters\n");
+		while (i >= 0 ){
+			printf("going to compare P[%d]= %c, T[%d]= %c\n",i,P[i],h,T[h]);
 			comparator++;
+			if (P[i] == T[h]){
 			i--;
 			h--;
+			}
+			else
+				break;	
 		}
 
 
 		if (i==-1){
 			printf("match starting in position: %d \n", (k-1)-(n-1));  /*match found*/
-			k = k + n -1- l_Prime[1];
+			k = k + n - l_Prime[1];
 		}
 		else{
-			printf("dont match\n");
 			switch(T[k])
 			{
 				case 'A':
-					badCharShift=rightmost[0];
+					rightmostPosition=rightmost[0];
 					break;
 				case 'T':
-					badCharShift=rightmost[1];
+					rightmostPosition=rightmost[1];
 					break;
 				case 'C':
-					badCharShift=rightmost[2];
+					rightmostPosition=rightmost[2];
 					break;
 				case 'G':
-					badCharShift=rightmost[3];
+					rightmostPosition=rightmost[3];
 					break;	
 			}
-			printf("badCharShift: %d\n",badCharShift);
+			badCharShift = i-rightmostPosition;
+			printf("n:%d, i:%d, rightmostPosition:%d, badCharShift: %d\n",n,i,rightmostPosition,badCharShift);
 
 			if ((P[i-1]!= T[h]) && L_Prime[i]>0){
 				goodSuffixShift = n -1-L_Prime[i];
-				printf("setting with 1st rule, goodSuffixShift: %d\n",goodSuffixShift);
+				/*printf("setting with 1st rule, goodSuffixShift: %d\n",goodSuffixShift);*/
 			}
 
 			else if (L_Prime[i]==0){
-				goodSuffixShift = n -1- l_Prime[i];
+				goodSuffixShift = n -1 -l_Prime[i];
 				printf("setting with 2nd rule, goodSuffixShift: %d\n",goodSuffixShift);
 			}
 
-			k = k + max(1,i-badCharShift,goodSuffixShift);
-			printf("new k = %d\n",k);
+			shift=max(1,badCharShift,goodSuffixShift);
+			k=k+shift;
+			printf("shift = %d\n",shift);
 		}
 	}
 	printf("compared: %d\n", comparator);
