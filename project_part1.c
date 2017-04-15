@@ -178,24 +178,66 @@ void naiveStringMatching(char * T, int n, char * P, int m)
 int * computePrefixFunction(char * P, int m)
 {
 	int * pi = (int *) malloc(sizeof(int) * m);
-	int i,j,a;
-	j=0;
-    for (i = 1; i < m; i++) {
-        
-        while (j > 0 && P[j] != P[i])
-            j = pi[j-1];
+	int q, k = -1;
+	pi[0] = k;
 
-        if (P[j] == P[i])
-            j++;
-        pi[i] = j;
-    }   
+	for (q = 1; q < m; q++)
+	{
+		while ( k > -1 && P[k+1] != P[q] )
+			k = pi[k];
+ 		
+		if (P[k+1] == P[q])
+			k++;
+		
+		pi[q] = k;
+	}
 
-    for(a=0;a<m;a++){
-		printf("Pi'(%d): %d \n",a,pi[a]);
-	} /*WORKS ACCORDING TO STACKOVERFLOW*/
-	
 	return pi;
 }
+
+/*
+ * @brief: Knuth-Morris-Pratt Algorithm based in cap 32.4 from Intruduction to Algorithms (CLRS 3rd edition).
+ *
+ * @param: T - The string where we want to find the patterns.
+ *	       n - The size of string T.
+ *		   P - The pattern we want to find.
+ *		   m - The size of that pattern.
+ */
+void KMP_matcher(char * T, int n, char * P, int m)
+{
+
+	int * pi = computePrefixFunction(P, m);
+
+	int i, q = -1, count = 0, loops = 1; /* test counter... */
+	
+	for (i = 0; i < n ; i++)
+	{	
+		count++;
+		while ( q > -1 && P[q+1] != T[i])
+		{
+			count++;
+			q = pi[q];
+		}
+
+		if (q == -1) count--;
+
+		count++;
+		if ( P[q + 1] == T[i] )
+			q++;
+			
+		
+		if ( q == m -1)
+		{
+			printf("%d ", i - q);
+			q = pi[q];
+		}	
+	}
+	puts("");
+	printf("%d \n", count);
+	free(pi);
+}
+
+/********************************************* COMMAND N **********************************************/
 
 
 /*
@@ -318,43 +360,6 @@ int * computeRightmost(char * P, int m){
 }
 
 
-
-/*
- * @brief: Knuth-Morris-Pratt Algorithm based in cap 32.4 from Intruduction to Algorithms (CLRS 3rd edition).
- *
- * @param: T - The string where we want to find the patterns.
- *	       n - The size of string T.
- *		   P - The pattern we want to find.
- *		   m - The size of that pattern.
- */
-void KMP_matcher(char * T, int n, char * P, int m)
-{
-
-	int * pi = computePrefixFunction(P, m);
-
-	int i, q = -1, count = 0; /* test counter... */
-	
-	for (i = 0; i < n ; i++)
-	{	
-
-		while ( q > -1 && P[q+1] != T[i])
-			q = pi[q];
-
-		if ( P[q + 1] == T[i] ){
-			count++;
-			q++;
-		}
-		
-		
-		if ( q == m -1)
-		{
-			printf("%d", i - q);
-			q = pi[q];
-		}	
-	}
-	printf("%d\n", count);
-	free(pi);
-}
 
 /*
  * @brief: Calculates table L'()
@@ -555,37 +560,4 @@ void Boyer_Moore_matcher(char * T, int m, char * P, int n)
 	free(l_Prime);
 }
 
-
-
-
-
-
-/********************************************** AUXILIAR  ***********************************************/
-
-/*
- * @brief: This function reads the pattern from the standard input.
- *
- * @param: Receives a pointers to the buffer where the pattern should be stored.
- *
- * @return:	Returns the number of characters readed from the standard input. (The size of the pattern)
- *
- *	NOTE: This is the more efficient way, because it calculates the size of the pattern while it is being
- *		  read from the input, yet there is a simpler way in comments.
- *		  The scanf should return the number of readed elements but i think thats only in c++. 
- */
-int readPattern(char * pattern)
-{
-	/**************************** Alternative ************************************ 
-	scanf("%s", pattern);
-	return strlen(pattern);
-	******************************************************************************/
-	int i = 0;
-	char new;
-	
-	while ((new = getchar()) != '\n') 
-		pattern[i++] = new;
-
-	pattern[i] = '\0';
-	return i;
-}
 
