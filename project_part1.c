@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX 100 /* max value for the size of a pattern */
+#define MAX(a,b) ((a) > (b) ? a : b) /* function to compute the max between 2 numbers */
 
 /*
  * @brief: This structure maintains the size of the string T and the nr of the occupied spaces in that
@@ -16,7 +16,7 @@ typedef struct
 
 } DynamicArray;
 
-/******************************************** SIGNATURES **********************************************/
+/************************************************ SIGNATURES ****************************************************/
 
 DynamicArray* createDynamicArray();
 void freeDynamicArray(DynamicArray * array);
@@ -24,19 +24,16 @@ void readString(DynamicArray * array);
 void naiveStringMatching(char * T, int n, char * P, int m);
 int * computePrefixFunction(char * P, int m);
 void KMP_matcher(char * T, int n, char * P, int m);
-
-
-int max(int a, int b, int c);
+void BM_matcher(char * T, int n, char * P, int m);
 int * computeRightmost(char * P, int m);
-void Boyer_Moore_matcher(char * T, int n, char * P, int m);
-char * reverseString(char * P, int n);
-int * z_based_BoyerMoore(char * P, int n);
-int * preProcessingDetail(char * P, int n);
+int * computeNTable(char * P, int m);
+int * compute_L_Prime_Table(char * P, int m, int * N);
+int * compute_l_prime_table(char * P, int m, int * N);
 
-int * computeZarray(char * P, int m);
+void printTable(int * table, int size);
+int letterToIndex(char c);
 
-
-/*******************************************************************************************************/
+/*****************************************************************************************************************/
 
 int main()
 {
@@ -73,8 +70,7 @@ int main()
 
 	        case 'B':
 	        	readString(P);
-	        	z_based_BoyerMoore(P->str, P->occupied);
-	        	freeDynamicArray(P);
+				BM_matcher(T->str, T->occupied, P->str, P->occupied);	       
 	            break;
 
 	 		default:
@@ -88,7 +84,7 @@ int main()
 	return EXIT_SUCCESS;
 }
 
-/******************************************** DYNAMIC ARRAY ********************************************/
+/************************************************ DYNAMIC ARRAY **********************************************/
 
 /*
  * @brief: This function creates an DynamicArray structure and it initializes the field values.
@@ -118,7 +114,7 @@ void freeDynamicArray(DynamicArray * array)
 	free(array);
 }
 										   
-/********************************************* COMMAND T **********************************************/
+/************************************************* COMMAND T ****************************************************/
 
 /*
  * @brief: This funtion will read the caracters from the command T and store them into string T of the 
@@ -145,7 +141,7 @@ void readString(DynamicArray * array)
 	}
 }
 
-/********************************************* COMMAND N **********************************************/
+/************************************************* COMMAND N ****************************************************/
 
 /*
  * @brief: Naive String Matching algorithm studied in theoretical class number 3.
@@ -165,7 +161,7 @@ void naiveStringMatching(char * T, int n, char * P, int m)
 	puts("");
 }
 
-/********************************************* COMMAND K **********************************************/
+/************************************************* COMMAND K ****************************************************/
 
 /*
  * @brief: Computes the prefix function. Based on the pseudocode from cap 32.4 from Intruduction to 
@@ -178,15 +174,15 @@ void naiveStringMatching(char * T, int n, char * P, int m)
 int * computePrefixFunction(char * P, int m)
 {
 	int * pi = (int *) malloc(sizeof(int) * m);
-	int q, k = -1;
+	int q, k = 0;
 	pi[0] = k;
 
 	for (q = 1; q < m; q++)
 	{
-		while ( k > -1 && P[k+1] != P[q] )
+		while ( k > 0 && P[k] != P[q] )
 			k = pi[k];
  		
-		if (P[k+1] == P[q])
+		if (P[k] == P[q])
 			k++;
 		
 		pi[q] = k;
@@ -205,100 +201,36 @@ int * computePrefixFunction(char * P, int m)
  */
 void KMP_matcher(char * T, int n, char * P, int m)
 {
-
 	int * pi = computePrefixFunction(P, m);
+	int i, q = 0, count = 0;  /* test counter... */
 
-	int i, q = -1, count = 0, loops = 1; /* test counter... */
-	
 	for (i = 0; i < n ; i++)
 	{	
 		count++;
-		while ( q > -1 && P[q+1] != T[i])
+		while ( q > 0 && P[q] != T[i])
 		{
 			count++;
-			q = pi[q];
+			q = pi[q-1];
 		}
 
-		if (q == -1) count--;
+		if (q == 0) count--;
 
 		count++;
-		if ( P[q + 1] == T[i] )
-			q++;
-			
+		if ( P[q] == T[i] )
+			q++;	
 		
-		if ( q == m -1)
+		if (q == m)
 		{
-			printf("%d ", i - q);
-			q = pi[q];
+			printf("%d ", i - m +1);
+			q = pi[q-1];
 		}	
 	}
-	puts("");
-	printf("%d \n", count);
+
+	printf("\n%d \n", count);
 	free(pi);
 }
 
-/********************************************* COMMAND N **********************************************/
-
-
-/*
- * @brief: returns the maximum between 3 numbers.
- * Clearly not optimized!!	
- */
-
-int * computeZarray(char * P, int m) /*confirmed*/
-{
-    int L, R, k,i;
-    int * Z = (int *) malloc(sizeof(int) * m);
-
-    L = R = 0;
-    for (i=1; i < m; ++i)
-    {
-        if (i > R)
-        {
-            L = R = i;
-            while (R<m && P[R-L] == P[R])
-                R++;
-            Z[i] = R-L;
-            R--;
-        }
-        else
-        {
-            k = i-L;
-            if (Z[k] < R-i+1)
-                 Z[i] = Z[k];
-            else
-            {
-                L = i;
-                while (R<m && P[R-L] == P[R])
-                    R++;
-                Z[i] = R-L;
-                R--;
-            }
-        }
-    }
-
-    return Z;
-}
-
-int max(int a, int b, int c){
-
-	if (a >= b && a >= c)
-		return a;
-	
-	else if (a>=b && a<=c)
-		return c;
-	
-	else if (a<=b && b<=c)
-		return c;
-	
-	else if (a<=b && b>=c)
-		return b;
-	
-	else 
-		return 0;
-	
-}
-
+/************************************************* COMMAND B ****************************************************/
 
 /*
  * @brief: Computes the rightmost ocurrences of the letters in the pattern.
@@ -311,253 +243,231 @@ int * computeRightmost(char * P, int m){
 	int * rightmost =  (int *) malloc(sizeof(int) * 4); /*ATCG*/
 	int found=0;
 	int i;
-
-	rightmost[0]=0;
-	rightmost[1]=0;
-	rightmost[2]=0;
-	rightmost[3]=0;
+	rightmost[0]= -1; rightmost[1]= -1; rightmost[2]= -1; rightmost[3]= -1;
 
 	for ( i=m-1; i>=0; i--){
 		switch (P[i]) 
 		{
 	        case 'A' :
-	        	if (rightmost[0]==0){
+	        	if (rightmost[0]== -1){
 	        		rightmost[0]=i;
 	        		found++;
 	        	}
 	        	break;
 	        case 'T':
-	        	if (rightmost[1]==0){
+	        	if (rightmost[1]== -1){
 	        		rightmost[1]=i;
 	        		found++;
 	        	}
 	        	break;
 	        case 'C':
-	        	if (rightmost[2]==0){
+	        	if (rightmost[2]== -1){
 	        		rightmost[2]=i;	
 	        		found++;
 	        	}
 	        	break;
 	        case 'G':
-	        	if (rightmost[3]==0){
+	        	if (rightmost[3]== -1){
 	    	        rightmost[3]=i;
 	    	        found++;		
 	    	    }		
 	        	break;
 		}
-
 		if (found == 4)
 			return rightmost;
 	}
-
-	
-	printf("A:%d\n",rightmost[0]);
-	printf("T:%d\n",rightmost[1]);
-	printf("C:%d\n",rightmost[2]);
-	printf("G:%d\n",rightmost[3]);
-	
+	/* puts("rightmost"); */
+	/* printTable(rightmost, 4); */
 	return rightmost;
 }
 
-
-
 /*
- * @brief: Calculates table L'()
+ * @brief: Computes table N for a pattern P with size m. The entry N[i] ( 0 <= i < m-1) contains the lenght
+ *         of the longest suffix of the substring P[0..i] that is also a suffix of the full pattern P.
+ *         (based on a definition from cap 2.2.4 from Algorithms on Strings, Trees, and Sequences: Gusfield 1997.)
+ *
+ * @param: P - pointer to the buffer that contains the pattern.
+ *         m - the size of the pattern.
+ *
+ * @return: returns a vector.
  */
-int * z_based_BoyerMoore(char * P, int n)
+int * computeNTable(char * P, int m)
 {
-	int * L_Prime = (int *) malloc(sizeof(int) * n);
-	char * reversedPattern = reverseString(P,n);
-	int * N = (int *) malloc(sizeof(int) * n);
+	int * N =  (int *) malloc(sizeof(int) * m-1);
+	int i, j;
 
-	int * zBasedOnReverse = computeZarray(reversedPattern,n);
-	int i,j,a;
-
-	N[0]=0;
-
-	for (j=1;j<n;j++){
-		N[j] = zBasedOnReverse[n-j];
-	}
-
-	for(a=0;a<n;a++){
-		printf("N(%d): %d \n",a,N[a]);
-	}
-
-	for (i = 0; i < n ; i++){
-		L_Prime[i] = 0;
-	}
-
-	for (j = 0; j < n-1 ; j++){
-		i = n - N[j] + 1; 
-		if(i>=0 && i<n){
-			L_Prime[i] = j;
+	for (i = 0; i < m-1; i++) 
+	{
+		for (j = i; j >= 0; j--) 
+		{
+			if (P[j] != P[m-1-i+j]) break;
 		}
+		N[i] = i-j;
 	}
 
-
-	for(a=0;a<n;a++){
-		printf("L'(%d): %d \n",a,L_Prime[a]);
-	}
-
-	free(reversedPattern);
-	free(N);
-	free(zBasedOnReverse);
-	
+	/* printTable(N, m-1); */
 	return N;
 }
 
+/*
+ * @brief: Computes table L'. The entry L'[i] (0 <= i < m) contains the largest index j less than n such
+ *         that N[j] = |P[i..m-1]|
+ *         (based on Theorem 2.2.2 from the book: Algorithms on Strings, Trees, and Sequences: Gusfield 1997.)
+ *
+ * @param: P - pointer to the buffer that contains the pattern.
+ *         m - the size of the pattern.
+ *         N - table N explained in function computeNTable.
+ *
+ * @return: returns a vector.
+ */
+int * compute_L_Prime_Table(char * P, int m, int * N)
+{
+	int * L_prime = (int *) malloc(sizeof(int) * m);
+	int i, j, largest_j, substring_size;
 
-int is_prefix(char *word, int wordlen, int pos) {
-    int i;
-    int suffixlen = wordlen - pos;
+	for (i = 0; i < m; i++)
+	{
+		largest_j = -1;
+		substring_size = m - i; /* |p[i..n]| = n - i +1 and n = last position on the array = m-2 */
 
-    for (i = 0; i < suffixlen; i++) {
-        if (word[i] != word[pos+i]) {
-            return 0;
-        }
-    }
-    return 1;
+		for (j = 0; j < m-1; j++)
+			if (j > largest_j && N[j] == substring_size)
+				largest_j = j;
+
+		L_prime[i] = largest_j;
+	}
+	/* puts("L' table:"); */
+	/* printTable(L_prime, m); */
+	return L_prime;
 }
 
 /*
- * @brief: Calculates table l'()
+ * @brief: Computes table l'. The entry l'[i] (0 <= i < m) contains the largest j <= |P[i..m-1]| such that
+ *         N[j] == j.
+ *         (based on Theorem 2.2.4 from the book: Algorithms on Strings, Trees, and Sequences: Gusfield 1997.)
+ *
+ * @param: P - pointer to the buffer that contains the pattern.
+ *         m - the size of the pattern.
+ *         N - table N explained in function computeNTable.
+ *
+ * @return: returns a vector.
  */
-int * preProcessingDetail(char * P, int n)
+int * compute_l_prime_table(char * P, int m, int * N)
 {
-	int * l_Prime = (int *) malloc(sizeof(int) * n);	
-	int i, j,a,largestLength;
-	char * pattern = (char *)malloc(sizeof(char) * n);
+	int * l_prime = (int *) malloc(sizeof(int) * m-1);
+	int i, j, largest_j, substring_size;
 
-	for (i=0;i<n;i++){
+	for (i = 0; i < m; i++)
+	{
+		largest_j = -1;
+		substring_size = m -i;
 
-		strcpy(pattern, P+i); /*Pattern of size n-i*/
-		largestLength=0;
+		for (j = 0; j <= substring_size; j++)
+			if (j > largest_j && N[j] == j)
+				largest_j = j;
 
-		j=1;
-		while (1){
-			if (is_prefix(pattern,n-i,j)){
-				largestLength=n-i-j;
-				break;
-			}
-			else if(j>n){
-				break;
-			}
-			else{
-				j++;
-			}
-		}	
-		l_Prime[i]=largestLength;
-	}	
-
-
-	free(pattern);
-
-	for(a=0;a<n;a++){
-		printf("l'(%d): %d \n",a,l_Prime[a]);
+		l_prime[i] = largest_j;
 	}
 
-	return l_Prime;
+	/* puts("l' table:"); */
+	/* printTable(l_prime, m); */
+	return l_prime;
 }
 
-
-
 /*
- * @brief: reverses a string
- */
-char * reverseString(char * P, int n)
-{
-	int i;
-	char *str = (char *) malloc(sizeof(char) * n);
-
-	for (i = 0; i < n ; i++){
-		str[n-i-1]=P[i];
-	}
-
-	return str;
-}
-
-
-
-/*
- * @brief: BoyerMoore Algorithm based in cap 32.4 from Intruduction to Algorithms (CLRS 3rd edition).
+ * @brief: Boyer Moore Algorithm based in cap 2.2.6 from Algorithms on Strings, Trees, and Sequences: Gusfield 1997.
  *
  * @param: T - The string where we want to find the patterns.
- *	       m - The size of string T.
+ *	       n - The size of string T.
  *		   P - The pattern we want to find.
- *		   n - The size of that pattern.
+ *		   m - The size of that pattern.
  */
-void Boyer_Moore_matcher(char * T, int m, char * P, int n)
+void BM_matcher(char * T, int n, char * P, int m)
 {
-	/*PreProcessing*/
-	int badCharShift,comparator,goodSuffixShift,shift;
+	int * N = computeNTable(P, m);
+	int * L_Prime = compute_L_Prime_Table(P, m, N);	
+	int * l_prime = compute_l_prime_table(P, m, N);
+	int * R = computeRightmost(P, m);
+	int k, i, h, goodSuffixShift, badSuffixShift, count=1;
 
-	int * rightmost = computeRightmost(P,n);
-	int * L_Prime = z_based_BoyerMoore(P,n);
-	int * l_Prime = preProcessingDetail(P,n);
+	k = m;
+	while (k <= n) 
+	{
+		i = m;
+		h = k;
 
-	
-	int i,h,k,rightmostPosition;
-	k = n;
-	comparator = 0;
-	while (k <= m){
-		printf("k:%d, m:%d\n",k,m);
-		i = n-1;
-		h = k-1;
-
-		while (i >= 0 ){
-			printf("going to compare P[%d]= %c, T[%d]= %c\n",i,P[i],h,T[h]);
-			comparator++;
-			if (P[i] == T[h]){
+		/*++count expression is just to increment the counter and its value is always true because it starts at 1*/
+		while (i > 0 && ++count && P[i-1] == T[h-1]) 
+		{
 			i--;
 			h--;
-			}
-			else
-				break;	
 		}
 
-
-		if (i==-1){
-			printf("match starting in position: %d \n", (k-1)-(n-1));  /*match found*/
-			k = k + n - l_Prime[1];
+		if (i == 0) 
+		{
+			printf("%d ", h); /* printing h is the same as printing the position of the first letter of P in T*/
+			
+			/* 
+			the next expression is needed because our table l' has entries -1 when the largest suffix of
+			P[i..n] doens't exists, and as result when l'[1] = -1 the value of k just increments. 
+			*/
+			(l_prime[1] > -1 ?  k += m - l_prime[1] : k++); 
 		}
-		else{
-			switch(T[k])
-			{
-				case 'A':
-					rightmostPosition=rightmost[0];
-					break;
-				case 'T':
-					rightmostPosition=rightmost[1];
-					break;
-				case 'C':
-					rightmostPosition=rightmost[2];
-					break;
-				case 'G':
-					rightmostPosition=rightmost[3];
-					break;	
-			}
-			badCharShift = i-rightmostPosition;
-			printf("n:%d, i:%d, rightmostPosition:%d, badCharShift: %d\n",n,i,rightmostPosition,badCharShift);
 
-			if ((P[i-1]!= T[h]) && L_Prime[i]>0){
-				goodSuffixShift = n -1-L_Prime[i];
-				/*printf("setting with 1st rule, goodSuffixShift: %d\n",goodSuffixShift);*/
-			}
+		else if (i == m) k++;
 
-			else if (L_Prime[i]==0){
-				goodSuffixShift = n -1 -l_Prime[i];
-				printf("setting with 2nd rule, goodSuffixShift: %d\n",goodSuffixShift);
-			}
+		else 
+		{
+			/* 
+			The Shift given by Good Suffix Rule as explained in cap 2.2.5 is different when a mismatch occur
+			in i-1 and L'[i] > 0 (L'[i] > -1 in our code) our L'[i] == 0. 
+			The next expression verifies the value of L'[i] and assigns the correct value. 
+			*/
+			goodSuffixShift =  (L_Prime[i] == -1) ? m - l_prime[i] : m - L_Prime[i];
+			badSuffixShift = R[letterToIndex(T[h-1])];
 
-			shift=max(1,badCharShift,goodSuffixShift);
-			k=k+shift;
-			printf("shift = %d\n",shift);
+			k += MAX(badSuffixShift, goodSuffixShift);
 		}
 	}
-	printf("compared: %d\n", comparator);
-	free(rightmost);
+
+	free(N);
 	free(L_Prime);
-	free(l_Prime);
+	free(l_prime);
+	free(R);
+	printf("\n%d \n", count-1);
+}
+
+/************************************************** AUXILIAR ****************************************************/
+
+/*
+ * @brief: This auxiliar function gives index corresponding to the letter c in table R.
+ *         Table R is organized by ATCG.
+ *
+ * @param: c - The char we want to know the index.
+ */
+int letterToIndex(char c)
+{
+	switch (c) {
+		case 'A': return 0;
+		case 'T': return 1;
+		case 'C': return 2;
+		case 'G': return 3;
+		default: return -1;
+	}
+}
+
+/*
+ * @brief: This auxiliar function is usefull for debug purpose by printing a table.
+ *
+ * @param: table - The table we want to print.
+ *         size - The size of the table.
+ */
+void printTable(int * table, int size)
+{
+	int i;
+	for (i = 0; i < size-1; i++)
+		printf("%d ", table[i]);
+	printf("%d\n", table[size-1]);
 }
 
 
