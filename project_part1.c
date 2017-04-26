@@ -344,6 +344,7 @@ int * compute_L_Prime_Table(char * P, int m, int * N)
 	/*
 	puts("L' table:"); 
 	printTable(L_prime, m);
+
 	*/
 	return L_prime;
 }
@@ -361,7 +362,7 @@ int * compute_L_Prime_Table(char * P, int m, int * N)
  */
 int * compute_l_prime_table(char * P, int m, int * N)
 {
-	int * l_prime = (int *) malloc(sizeof(int) * m-1);
+	int * l_prime = (int *) malloc(sizeof(int) * m);
 	int i, j, largest_j, substring_size;
 
 	for (i = 0; i < m; i++)
@@ -370,7 +371,7 @@ int * compute_l_prime_table(char * P, int m, int * N)
 		substring_size = m -i;
 
 		for (j = 0; j <= substring_size; j++)
-			if ((j+1) > largest_j && N[j] == j)
+			if (((j+1) > largest_j) && (N[j] == j+1))
 				largest_j = j+1;
 
 		l_prime[i] = largest_j;
@@ -412,9 +413,9 @@ void BM_matcher(char * T, int n, char * P, int m)
 		}
 
 		if (i == -1) 
-		{
+		{	
 			printf("%d ", h+1); /* printing h is the same as printing the position of the first letter of P in T*/
-			(l_prime[1] > 0 ?  k += m - l_prime[1] : k++);
+			k = (l_prime[1] > 0) ? k + m - l_prime[1] : k+1;
 		}
 
 		else if (i == m-1) k++; 
@@ -426,7 +427,7 @@ void BM_matcher(char * T, int n, char * P, int m)
 			in i and L'[i+1] > 0. 
 			The next expression verifies the value of L'[i] and assigns the correct value. 
 			*/
-			goodSuffixShift =  (L_Prime[i+1] == 0) ? m-1 - l_prime[i+1] : m-1 - L_Prime[i+1];
+			goodSuffixShift = (L_Prime[i+1] == 0) ? m-1 - l_prime[i+1] : m-1 - L_Prime[i+1];
 			badSuffixShift = MAX(1, i - R[letterToIndex(T[h])]);
 			k += MAX(badSuffixShift, goodSuffixShift);
 		}
