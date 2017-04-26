@@ -65,16 +65,22 @@ int main()
 
 	        case 'K':
 	        	readString(P);
+
 	        	KMP_matcher(T->str, T->occupied, P->str, P->occupied);
 	        	break;
 
 	        case 'B':
 	        	readString(P);
-				BM_matcher(T->str, T->occupied, P->str, P->occupied);	       
+				BM_matcher(T->str, T->occupied, P->str, P->occupied);
+				/*
+				compute_L_Prime_Table(P->str, P->occupied, computeNTable(P->str, P->occupied));	
+				compute_l_prime_table(P->str, P->occupied, computeNTable(P->str, P->occupied));
+				computeRightmost(P->str, P->occupied);
+				*/
 	            break;
 
 	 		default:
-	            printf("ERROR: Unknown command\n");
+	            printf("ERROR: Unknown command %c\n", command);
 	    }
     }
     /* free memory for T and P */
@@ -177,17 +183,18 @@ int * computePrefixFunction(char * P, int m)
 	int q, k = 0;
 	pi[0] = k;
 
+	
 	for (q = 1; q < m; q++)
 	{
 		while ( k > 0 && P[k] != P[q] )
-			k = pi[k];
- 		
+			k = pi[k-1];
+
 		if (P[k] == P[q])
 			k++;
 		
 		pi[q] = k;
 	}
-
+	
 	return pi;
 }
 
@@ -202,28 +209,24 @@ int * computePrefixFunction(char * P, int m)
 void KMP_matcher(char * T, int n, char * P, int m)
 {
 	int * pi = computePrefixFunction(P, m);
-	int i, q = 0, count = 0;  /* test counter... */
+	int i, q = 0, count = 0; 
 
 	for (i = 0; i < n ; i++)
 	{	
-		count++;
-		while ( q > 0 && P[q] != T[i])
-		{
-			count++;
+		/* ++count is always true, this expression serves only to increment the counter of comparations */
+		
+		while ( q > 0 && ++count && P[q] != T[i])
 			q = pi[q-1];
-		}
-
-		if (q == 0) count--;
-
-		count++;
-		if ( P[q] == T[i] )
+			
+		if (++count && P[q] == T[i])
 			q++;	
 		
 		if (q == m)
 		{
 			printf("%d ", i - m +1);
 			q = pi[q-1];
-		}	
+		}
+
 	}
 
 	printf("\n%d \n", count);
@@ -243,32 +246,32 @@ int * computeRightmost(char * P, int m){
 	int * rightmost =  (int *) malloc(sizeof(int) * 4); /*ATCG*/
 	int found=0;
 	int i;
-	rightmost[0]= -1; rightmost[1]= -1; rightmost[2]= -1; rightmost[3]= -1;
+	rightmost[0]= 0; rightmost[1]= 0; rightmost[2]= 0; rightmost[3]= 0;
 
 	for ( i=m-1; i>=0; i--){
 		switch (P[i]) 
 		{
 	        case 'A' :
-	        	if (rightmost[0]== -1){
-	        		rightmost[0]=i;
+	        	if (rightmost[0] == 0){
+	        		rightmost[0] = i+1;
 	        		found++;
 	        	}
 	        	break;
 	        case 'T':
-	        	if (rightmost[1]== -1){
-	        		rightmost[1]=i;
+	        	if (rightmost[1] == 0){
+	        		rightmost[1] = i+1;
 	        		found++;
 	        	}
 	        	break;
 	        case 'C':
-	        	if (rightmost[2]== -1){
-	        		rightmost[2]=i;	
+	        	if (rightmost[2] == 0){
+	        		rightmost[2] = i+1;	
 	        		found++;
 	        	}
 	        	break;
 	        case 'G':
-	        	if (rightmost[3]== -1){
-	    	        rightmost[3]=i;
+	        	if (rightmost[3] == 0){
+	    	        rightmost[3] = i+1;
 	    	        found++;		
 	    	    }		
 	        	break;
@@ -276,8 +279,10 @@ int * computeRightmost(char * P, int m){
 		if (found == 4)
 			return rightmost;
 	}
-	/* puts("rightmost"); */
-	/* printTable(rightmost, 4); */
+	/* 
+	puts("rightmost"); 
+	printTable(rightmost, 4);
+	*/
 	return rightmost;
 }
 
@@ -327,17 +332,19 @@ int * compute_L_Prime_Table(char * P, int m, int * N)
 
 	for (i = 0; i < m; i++)
 	{
-		largest_j = -1;
+		largest_j = 0;
 		substring_size = m - i; /* |p[i..n]| = n - i +1 and n = last position on the array = m-2 */
 
 		for (j = 0; j < m-1; j++)
-			if (j > largest_j && N[j] == substring_size)
-				largest_j = j;
+			if ((j+1) > largest_j && N[j] == substring_size)
+				largest_j = j+1;
 
 		L_prime[i] = largest_j;
 	}
-	/* puts("L' table:"); */
-	/* printTable(L_prime, m); */
+	/*
+	puts("L' table:"); 
+	printTable(L_prime, m);
+	*/
 	return L_prime;
 }
 
@@ -359,18 +366,19 @@ int * compute_l_prime_table(char * P, int m, int * N)
 
 	for (i = 0; i < m; i++)
 	{
-		largest_j = -1;
+		largest_j = 0;
 		substring_size = m -i;
 
 		for (j = 0; j <= substring_size; j++)
-			if (j > largest_j && N[j] == j)
-				largest_j = j;
+			if ((j+1) > largest_j && N[j] == j)
+				largest_j = j+1;
 
 		l_prime[i] = largest_j;
 	}
-
-	/* puts("l' table:"); */
-	/* printTable(l_prime, m); */
+	/*
+	puts("l' table:"); 
+	printTable(l_prime, m);
+	*/
 	return l_prime;
 }
 
@@ -388,44 +396,38 @@ void BM_matcher(char * T, int n, char * P, int m)
 	int * L_Prime = compute_L_Prime_Table(P, m, N);	
 	int * l_prime = compute_l_prime_table(P, m, N);
 	int * R = computeRightmost(P, m);
-	int k, i, h, goodSuffixShift, badSuffixShift, count=1;
+	int k, i, h, goodSuffixShift, badSuffixShift, count=0;
 
-	k = m;
-	while (k <= n) 
+	k = m-1;
+	while (k <= n-1) 
 	{
-		i = m;
+		i = m-1;
 		h = k;
 
-		/*++count expression is just to increment the counter and its value is always true because it starts at 1*/
-		while (i > 0 && ++count && P[i-1] == T[h-1]) 
+		/* ++count expression is just to increment the counter and its value is always true */
+		while (i > -1 && ++count && P[i] == T[h]) 
 		{
 			i--;
 			h--;
 		}
 
-		if (i == 0) 
+		if (i == -1) 
 		{
-			printf("%d ", h); /* printing h is the same as printing the position of the first letter of P in T*/
-			
-			/* 
-			the next expression is needed because our table l' has entries -1 when the largest suffix of
-			P[i..n] doens't exists, and as result when l'[1] = -1 the value of k just increments. 
-			*/
-			(l_prime[1] > -1 ?  k += m - l_prime[1] : k++); 
+			printf("%d ", h+1); /* printing h is the same as printing the position of the first letter of P in T*/
+			(l_prime[1] > 0 ?  k += m - l_prime[1] : k++);
 		}
 
-		else if (i == m) k++;
+		else if (i == m-1) k++; 
 
 		else 
 		{
 			/* 
 			The Shift given by Good Suffix Rule as explained in cap 2.2.5 is different when a mismatch occur
-			in i-1 and L'[i] > 0 (L'[i] > -1 in our code) our L'[i] == 0. 
+			in i and L'[i+1] > 0. 
 			The next expression verifies the value of L'[i] and assigns the correct value. 
 			*/
-			goodSuffixShift =  (L_Prime[i] == -1) ? m - l_prime[i] : m - L_Prime[i];
-			badSuffixShift = R[letterToIndex(T[h-1])];
-
+			goodSuffixShift =  (L_Prime[i+1] == 0) ? m-1 - l_prime[i+1] : m-1 - L_Prime[i+1];
+			badSuffixShift = MAX(1, i - R[letterToIndex(T[h])]);
 			k += MAX(badSuffixShift, goodSuffixShift);
 		}
 	}
@@ -434,7 +436,7 @@ void BM_matcher(char * T, int n, char * P, int m)
 	free(L_Prime);
 	free(l_prime);
 	free(R);
-	printf("\n%d \n", count-1);
+	printf("\n%d \n", count);
 }
 
 /************************************************** AUXILIAR ****************************************************/
