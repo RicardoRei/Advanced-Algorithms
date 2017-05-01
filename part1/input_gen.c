@@ -26,6 +26,19 @@ int main(int argc,  char* argv[])
 	fclose(fp);
 }
 
+/*
+ * @brief: This function generates T_SIZE x a random letter, and prints that letter to a file.
+ *         After generating T it generates P with the same process.
+ *
+ * @param: P_SIZE - Size of the pattern we want to generate.
+ *         T_SIZE - Size of the text we want to generate.
+ *         fp - File pointer.
+ * 
+ * Output exemple: T ACCATGGACTAGA...
+ *                 K ACTGT
+ *                 B ACTGT
+ *                 x
+ */
 void randomSequenceGen(int P_SIZE, int T_SIZE, FILE *fp)
 {
 	int n, count = 0;
@@ -51,6 +64,21 @@ void randomSequenceGen(int P_SIZE, int T_SIZE, FILE *fp)
 
 	fprintf(fp, "N %s\nK %s\nB %s\nX\n", pattern, pattern, pattern);
 }
+
+
+/*
+ * @brief: This function generates a text with size T_SIZE higly repetitive and a pattern with size P_SIZE
+ *         with only one letter.
+ *
+ * @param: P_SIZE - Size of the pattern we want to generate.
+ *         T_SIZE - Size of the text we want to generate.
+ *         fp - File pointer.
+ * 
+ * Output exemple: T AAAAAAAGGGGGGGGGGGCCC..
+ *                 K CCC
+ *                 B CCC
+ *                 x
+ */
 
 void highlyRepetitiveSequenceGen(int P_SIZE, int T_SIZE, FILE *fp)
 {

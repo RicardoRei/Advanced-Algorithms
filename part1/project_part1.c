@@ -30,6 +30,7 @@ int * computeNTable(char * P, int m);
 int * compute_L_Prime_Table(char * P, int m, int * N);
 int * compute_l_prime_table(char * P, int m, int * N);
 
+/* Auxiliar Functions */
 void printTable(int * table, int size);
 int letterToIndex(char c);
 
@@ -72,11 +73,6 @@ int main()
 	        case 'B':
 	        	readString(P);
 				BM_matcher(T->str, T->occupied, P->str, P->occupied);
-				/*
-				compute_L_Prime_Table(P->str, P->occupied, computeNTable(P->str, P->occupied));	
-				compute_l_prime_table(P->str, P->occupied, computeNTable(P->str, P->occupied));
-				computeRightmost(P->str, P->occupied);
-				*/
 	            break;
 
 	 		default:
@@ -164,7 +160,7 @@ void naiveStringMatching(char * T, int n, char * P, int m)
 	for (i = 0; i + m <= n; i++)
 		if (0 == strncmp(&(T[i]), P, m))
 			printf("%d ", i);
-	puts("");
+	printf("\n");
 }
 
 /************************************************* COMMAND K ****************************************************/
@@ -279,10 +275,7 @@ int * computeRightmost(char * P, int m){
 		if (found == 4)
 			return rightmost;
 	}
-	/* 
-	puts("rightmost"); 
-	printTable(rightmost, 4);
-	*/
+
 	return rightmost;
 }
 
@@ -310,7 +303,6 @@ int * computeNTable(char * P, int m)
 		N[i] = i-j;
 	}
 
-	/* printTable(N, m-1); */
 	return N;
 }
 
@@ -341,11 +333,7 @@ int * compute_L_Prime_Table(char * P, int m, int * N)
 
 		L_prime[i] = largest_j;
 	}
-	/*
-	puts("L' table:"); 
-	printTable(L_prime, m);
 
-	*/
 	return L_prime;
 }
 
@@ -376,10 +364,7 @@ int * compute_l_prime_table(char * P, int m, int * N)
 
 		l_prime[i] = largest_j;
 	}
-	/*
-	puts("l' table:"); 
-	printTable(l_prime, m);
-	*/
+
 	return l_prime;
 }
 
@@ -414,8 +399,10 @@ void BM_matcher(char * T, int n, char * P, int m)
 
 		if (i == -1) 
 		{	
-			printf("%d ", h+1); /* printing h is the same as printing the position of the first letter of P in T*/
-			k = (l_prime[1] > 0) ? k + m - l_prime[1] : k+1;
+			/* printing h is the same as printing the position of the first letter of P in T*/
+			printf("%d ", h+1); 
+			/* next expression assigns different values depending on value of l'[1]*/
+			k = (l_prime[1] > 0) ? k + m - l_prime[1] : k+1; 
 		}
 
 		else if (i == m-1) k++; 
@@ -425,7 +412,7 @@ void BM_matcher(char * T, int n, char * P, int m)
 			/* 
 			The Shift given by Good Suffix Rule as explained in cap 2.2.5 is different when a mismatch occur
 			in i and L'[i+1] > 0. 
-			The next expression verifies the value of L'[i] and assigns the correct value. 
+			The next expression verifies the value of L'[i+1] and assigns the correct value. 
 			*/
 			goodSuffixShift = (L_Prime[i+1] == 0) ? m-1 - l_prime[i+1] : m-1 - L_Prime[i+1];
 			badSuffixShift = MAX(1, i - R[letterToIndex(T[h])]);
@@ -450,7 +437,8 @@ void BM_matcher(char * T, int n, char * P, int m)
  */
 int letterToIndex(char c)
 {
-	switch (c) {
+	switch (c) 
+	{
 		case 'A': return 0;
 		case 'T': return 1;
 		case 'C': return 2;
