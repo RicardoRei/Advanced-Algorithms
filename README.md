@@ -1,6 +1,8 @@
 # Advanced-Algorithms
 Advanced Algorithms repository for labs and project
+
 Compile Line: gcc -ansi -Wall -pedantic -o test project_part*.c
+
 interesting sites for the project:
 
 Part I:
