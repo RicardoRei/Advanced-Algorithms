@@ -32,7 +32,6 @@ LCT allocLct(int V)
 	return nodes;
 }
 
-
 void freeLCT(LCT t)
 {
 	free(t);
@@ -58,28 +57,6 @@ void rotateRight(LCT node)
 	parent->hook[0] = node;
 	node->right = parent;
 }
-
-void rotateRightTest(LCT node)
-{
-	LCT parent = node->hook[0];
-	parent->left = node->right;
-	
-	if (parent->hook == NULL)
-	{	
-		free(node->hook);
-		parent->hook = (LCT*) malloc(sizeof(LCT));
-		node->hook = NULL;
-	}
-	else
-	{
-		node->hook[0] = parent->hook[0];
-		node->hook[0]->left = node;
-	}
-	
-	parent->hook[0] = node;
-	node->right = parent;
-}
-
 
 void rotateLeft(LCT node)
 {
