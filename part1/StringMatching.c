@@ -179,7 +179,6 @@ int * computePrefixFunction(char * P, int m)
 	int q, k = 0;
 	pi[0] = k;
 
-	
 	for (q = 1; q < m; q++)
 	{
 		while ( k > 0 && P[k] != P[q] )
@@ -209,9 +208,8 @@ void KMP_matcher(char * T, int n, char * P, int m)
 
 	for (i = 0; i < n ; i++)
 	{	
-		/* ++count is always true, this expression serves only to increment the counter of comparations */
-		
-		while ( q > 0 && ++count && P[q] != T[i])
+		/* ++count is always true, this expression serves only to increment the counter of comparations */ 
+		while ( q > 0 && P[q] != T[i] && ++count)
 			q = pi[q-1];
 			
 		if (++count && P[q] == T[i])
@@ -220,6 +218,7 @@ void KMP_matcher(char * T, int n, char * P, int m)
 		if (q == m)
 		{
 			printf("%d ", i - m +1);
+			count += (i < n-1) ? 1 : 0;
 			q = pi[q-1];
 		}
 
@@ -325,7 +324,7 @@ int * compute_L_Prime_Table(char * P, int m, int * N)
 	for (i = 0; i < m; i++)
 	{
 		largest_j = 0;
-		substring_size = m - i; /* |p[i..n]| = n - i +1 and n = last position on the array = m-2 */
+		substring_size = m - i; /* |p[i..n]| = n - i + 1 as defined in the book but m = n+1 in that definition*/
 
 		for (j = 0; j < m-1; j++)
 			if ((j+1) > largest_j && N[j] == substring_size)
@@ -333,7 +332,6 @@ int * compute_L_Prime_Table(char * P, int m, int * N)
 
 		L_prime[i] = largest_j;
 	}
-
 	return L_prime;
 }
 
@@ -358,13 +356,12 @@ int * compute_l_prime_table(char * P, int m, int * N)
 		largest_j = 0;
 		substring_size = m -i;
 
-		for (j = 0; j <= substring_size; j++)
-			if (((j+1) > largest_j) && (N[j] == j+1))
-				largest_j = j+1;
+		for (j = 1; j <= substring_size; j++)
+			if (j > largest_j && N[j-1] == j)
+				largest_j = j;
 
 		l_prime[i] = largest_j;
 	}
-
 	return l_prime;
 }
 
@@ -383,13 +380,12 @@ void BM_matcher(char * T, int n, char * P, int m)
 	int * l_prime = compute_l_prime_table(P, m, N);
 	int * R = computeRightmost(P, m);
 	int k, i, h, goodSuffixShift, badSuffixShift, count=0;
-
+	
 	k = m-1;
 	while (k <= n-1) 
 	{
 		i = m-1;
 		h = k;
-
 		/* ++count expression is just to increment the counter and its value is always true */
 		while (i > -1 && ++count && P[i] == T[h]) 
 		{
@@ -400,12 +396,16 @@ void BM_matcher(char * T, int n, char * P, int m)
 		if (i == -1) 
 		{	
 			/* printing h is the same as printing the position of the first letter of P in T*/
-			printf("%d ", h+1); 
-			/* next expression assigns different values depending on value of l'[1]*/
-			k = (l_prime[1] > 0) ? k + m - l_prime[1] : k+1; 
+			printf("%d ", h+1);
+			k = k + m - l_prime[1];
 		}
 
-		else if (i == m-1) k++; 
+		else if (i == m-1)
+			/* Good Suffix rule says that in case of a match the pattern should shift 1 and Bad Suffix rule
+			   says that a shift should be the Max between 1 and table of the rightmost. So in this case we 
+			   can consider the Bad Suffix rule only.
+			*/
+			k += MAX(1, i+1 - R[letterToIndex(T[h])]);
 
 		else 
 		{
@@ -414,8 +414,8 @@ void BM_matcher(char * T, int n, char * P, int m)
 			in i and L'[i+1] > 0. 
 			The next expression verifies the value of L'[i+1] and assigns the correct value. 
 			*/
-			goodSuffixShift = (L_Prime[i+1] == 0) ? m-1 - l_prime[i+1] : m-1 - L_Prime[i+1];
-			badSuffixShift = MAX(1, i - R[letterToIndex(T[h])]);
+			goodSuffixShift = (L_Prime[i+1] == 0) ? m - l_prime[i+1] : m - L_Prime[i+1];
+			badSuffixShift = MAX(1, i+1 - R[letterToIndex(T[h])]);
 			k += MAX(badSuffixShift, goodSuffixShift);
 		}
 	}
@@ -460,5 +460,3 @@ void printTable(int * table, int size)
 		printf("%d ", table[i]);
 	printf("%d\n", table[size-1]);
 }
-
-
