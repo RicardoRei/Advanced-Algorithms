@@ -10,13 +10,17 @@ struct LCT {
 	/* Right Child */
   	LCT right;   
   	/* General Parent Pointer. */
-	LCT* hook;   
-
+	LCT parent;
+	/** Pointer within the auxiliary tree */
+	LCT pathParent;   
 	/* The size of this sub-tree.*/
-  	int sum; /* Negative values are used to indicate that left and right pointers should be swapped
-                on the sub-tree. */ 
+  	int depth;
 };
 
+/*********************************************** NOTE ******************************************************/
+/*  In this code i compare pointers with each others, this is only safe because in this project every node */
+/*  belongs to the same array allocated in the begin of main. 											   */
+/***********************************************************************************************************/
 
 LCT allocLct(int V)
 {
@@ -26,8 +30,9 @@ LCT allocLct(int V)
 	{
 		nodes[i].left = NULL;
 		nodes[i].right = NULL;
-		nodes[i].hook = NULL;
-		nodes[i].sum = 0;
+		nodes[i].parent = NULL;
+		nodes[i].pathParent = NULL;
+		nodes[i].depth = 0;
 	}
 	return nodes;
 }
@@ -39,51 +44,41 @@ void freeLCT(LCT t)
 
 void rotateRight(LCT node)
 {
-	LCT parent = node->hook[0];
+	LCT parent = node->pathParent;
 	parent->left = node->right;
-	
-	if (parent->hook == NULL)
-	{	
-		free(node->hook);
-		parent->hook = (LCT*) malloc(sizeof(LCT));
-		node->hook = NULL;
-	}
-	else
-	{
-		node->hook[0] = parent->hook[0];
-		node->hook[0]->left= node;
-	}
-	
-	parent->hook[0] = node;
+
+	if (node->right != NULL)
+		node->right->pathParent = parent;
+
+	node->pathParent = parent->pathParent;
+
+	if (node->pathParent != NULL)
+		node->pathParent->left = node;
+
+	parent->pathParent = node;
 	node->right = parent;
 }
 
 void rotateLeft(LCT node)
 {
-	LCT parent = node->hook[0];
+	LCT parent = node->pathParent;
 	parent->right = node->left;
-	
-	if (parent->hook == NULL)
-	{
-		free(node->hook);
-		parent->hook = (LCT*) malloc(sizeof(LCT));
-		node->hook = NULL;
-	}
-	else
-	{
-		node->hook[0] = parent->hook[0];
-		node->hook[0]->left = node;
-	}
-		
+	if (node->left != NULL)
+		node->left->pathParent = parent;
 
-	parent->hook[0] = node;
+	node->pathParent = parent->pathParent;
+
+	if (node->pathParent != NULL)
+		node->pathParent->left = node;
+
+	parent->pathParent = node;
 	node->left = parent;
 }
 
 
 void visit(LCT h)
 {
-	printf("%d\t", h->sum);
+	printf("%d\t", h->depth);
 }
 
 void traverse(LCT h)
@@ -105,7 +100,7 @@ LCT insertTree(LCT h, LCT new_node)
 		return h;
 	}
 
-	if (new_node->sum < h->sum)
+	if (new_node->depth < h->depth)
 		h->left = insertTree(h->left, new_node);
 	else 
 		h->right = insertTree(h->right, new_node);
@@ -115,23 +110,23 @@ LCT insertTree(LCT h, LCT new_node)
 
 LCT splayingStep(LCT node)
 {
-	LCT parent = node->hook[0];
+	LCT parent = node->pathParent;
 	LCT g_parent = NULL; 
 
 	/* Case 1 ZIG */
-	if (parent->hook == NULL && (parent->right == node))
+	if (parent->pathParent == NULL && (parent->right == node))
 	{
 		rotateLeft(node);
 		return node;
 	}
-	else if (parent->hook == NULL && (parent->left == node))
+	else if (parent->pathParent == NULL && (parent->left == node))
 	{
 		rotateRight(node);
 		return node;	
 	}
 
 	/* Case 2 ZIG - ZIG */
-	g_parent = parent->hook[0];
+	g_parent = parent->pathParent;
 	/* if both x and p(x) are left childs */
 	if ((parent == g_parent->left) && (parent->left == node))
 	{
@@ -164,66 +159,92 @@ LCT splayingStep(LCT node)
 
 LCT splay(LCT node)
 {
-	while (node->hook != NULL) node = splayingStep(node);
+	while (node->pathParent != NULL) node = splayingStep(node);
 	return node;
 }
 
+void access(LCT t, int v)
+{
+	LCT node = &t[v];
+	LCT aux = NULL;
+
+	splay(node);
+	if (node->right != NULL)
+	{
+		node->right->pathParent = node;
+		node->right->parent = NULL;
+		node->right = NULL;
+	}
+
+	aux = node->pathParent;
+	while ( aux !=  NULL)
+	{
+		splay(aux);
+		if (aux->right != NULL)
+		{
+			aux->right->pathParent = aux;
+			aux->right->parent = NULL;
+		}
+
+		aux->right = node;
+		node->parent = aux;
+		node->pathParent = NULL;
+		splay(node);
+	}	
+}
+
+void link(LCT t, int u, int v)
+{
+	access(t, u);
+	access(t, v);
+	t[u].left = &t[v];
+	t[v].right = &t[u];
+}
+
+void cut(LCT t, int u, int v)
+{
+	/* first i check if its a valid edge. */
+	if (t[u].left == &t[v])
+	{
+		access(t, v);
+		t[v].left->parent = NULL; /* = t[u].left = NULL */
+		t[v].left = NULL;
+	}
+}
+
+
 int main()
 {
-	LCT tree = NULL;
-	LCT vec = allocLct(5);
-	int i;
+	LCT vec = NULL;
+	int size, u, v;
+	char command;
 
-	for (i = 0; i < 5; i++)
-		vec[i].sum = i;
-		
-	tree = insertTree(tree, &vec[3]);
+	scanf("%d\n", &size);
+	vec = allocLct(size);
 
-	tree = insertTree(tree, &vec[4]);
-	vec[4].hook = (LCT*) malloc(sizeof(LCT)); 
-	vec[4].hook[0] = &vec[3];
+	while ((command = getchar()) != 'X') /* reads the command and if its X exits the while cycle */
+	{  
+        getchar(); /* reads the space after the command and the \n of X command */
 
-	tree = insertTree(tree, &vec[1]);
-	vec[1].hook = (LCT*) malloc(sizeof(LCT)); 
-	vec[1].hook[0] = &vec[3];
+        switch (command) 
+        {
+	        case 'L':
+	        	scanf("%d %d\n",&u, &v);
+	        	link(vec, u-1, v-1);
+	        	break;
 
-	tree = insertTree(tree, &vec[0]);
-	vec[0].hook = (LCT*) malloc(sizeof(LCT)); 
-	vec[0].hook[0] = &vec[1];
+	        case 'C':
+	        	scanf("%d %d\n",&u, &v);
+	        	cut(vec, u-1, v-1);
+	        	break;
 
-	tree = insertTree(tree, &vec[2]);
-	vec[2].hook = (LCT*) malloc(sizeof(LCT)); 
-	vec[2].hook[0] = &vec[1];
+	 		default:
+	            printf("ERROR: Unknown command %c\n", command);
+	    }
+    }
 
-	traverse(tree);
-	printf("\n");
+    if (vec != NULL) freeLCT(vec); 
 
-	splay(&vec[1]);
-	tree = &vec[1];
-	traverse(tree);
-	printf("\n");
-
-	
-	tree = splay(&vec[4]);
-	traverse(tree);
-	printf("\n");
-	
-	tree = splay(&vec[3]);
-	traverse(tree);
-	printf("\n");
-
-	tree = splay(&vec[2]);
-	traverse(tree);
-	printf("\n");
-
-	tree = splay(&vec[3]);
-	traverse(tree);
-	printf("\n");
-
-	tree = splay(&vec[0]);
-	traverse(tree);
-	printf("\n");
-	
 	return EXIT_SUCCESS;
 }
 

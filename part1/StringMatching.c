@@ -66,7 +66,6 @@ int main()
 
 	        case 'K':
 	        	readString(P);
-
 	        	KMP_matcher(T->str, T->occupied, P->str, P->occupied);
 	        	break;
 
@@ -205,6 +204,8 @@ void KMP_matcher(char * T, int n, char * P, int m)
 {
 	int * pi = computePrefixFunction(P, m);
 	int i, q = 0, count = 0; 
+
+	printTable(pi, m);
 
 	for (i = 0; i < n ; i++)
 	{	
