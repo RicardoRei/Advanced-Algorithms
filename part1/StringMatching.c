@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+/************************* Project done by Ricardo Rei and Miguel Carvalho *************************************/
+
 #define MAX(a,b) ((a) > (b) ? a : b) /* function to compute the max between 2 numbers */
 
 /*
@@ -44,7 +46,7 @@ int main()
 	
 	while ((command = getchar()) != 'X') /* reads the command and if its X exits the while cycle */
 	{  
-        getchar(); /* reads the space after the command and the \n of X command */
+        getchar(); /* reads the space after the command */
 
         if (P != NULL) freeDynamicArray(P);/*P's are recycled every command which means we can free here*/
 		P = createDynamicArray();
