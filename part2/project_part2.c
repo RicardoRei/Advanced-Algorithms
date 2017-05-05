@@ -293,6 +293,9 @@ int checkLeftBranch(LCT t, int u, int v)
 
 /* @brief: Link entre dois nos. Nos papers e nos videos o link implica aceder aos dois nos primeiro. No entanto o
  *		   o codigo que encontrei no git nao faz isso. (Miguel tenta perceber qual das duas usar.)
+*
+ *			Para Ricardo: Segundo pseudo cohdigo das teohricas link implica access aos dois. Existem mais cenas no pseudo
+ *			para alem dos accesses.
  *
  *         Receives an array with all LCT nodes, int u that represents the position of the node u and int v that 
  *         represents the position of the node v.
@@ -310,6 +313,10 @@ int checkLeftBranch(LCT t, int u, int v)
 }
 
 /* @brief: This function removes the edge (u, v) if there is one.
+*
+*			Para Ricardo: Nas teohricas ele mete apenas left(v)=Null
+*			Acho que devia ser o left(v) e não left(u) a ser cortado, para manter a ordem dos argumentos igual
+*			á do link
  *
  *         Receives an array with all LCT nodes, int u that represents the position of the node u and int v that 
  *         represents the position of the node v.
@@ -332,6 +339,9 @@ void cut(LCT t, int u, int v)
 
 /* @brief: A minha ideia para ver se dois nos estavam ligados por um path era seguir os path parent pointers ate 
  *         achar o outro no. (faz sentido Miguel)
+ *
+ *			Para Ricardo: Eu não sei se a tua ideia funciona. A minha solução seria chegar ás roots das trees de ambos os
+ *			nós e verificar se têm a mesma root.
  *
  *         Receives an array with all LCT nodes, int u that represents the position of the node u and int v that 
  *         represents the position of the node v.
