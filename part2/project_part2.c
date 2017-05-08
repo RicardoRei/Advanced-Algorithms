@@ -37,9 +37,11 @@ void access(LCT t, int v);
 void link(LCT t, int u, int v);
 void cut(LCT t, int u, int v);
 int connectedQ(LCT t, int u, int v);
-int checkLeftBranch(LCT t, int u, int v);
+LCT findRoot(LCT t, int v);
+void reRoot(LCT t, int v);
 
 /* Auxiliar funtions */
+void unflip(LCT node);
 void printArray(LCT array, int size);
 /*****************************************************************************************************************/
 
@@ -105,7 +107,7 @@ LCT allocLct(int V)
 		nodes[i].right = NULL;
 		nodes[i].parent = NULL;
 		nodes[i].pathParent = NULL;
-		nodes[i].depth = 0;
+		nodes[i].depth = 1;
 	}
 	return nodes;
 }
@@ -187,6 +189,11 @@ LCT splayingStep(LCT node)
 {
 	LCT parent = node->parent;
 	LCT g_parent = parent->parent; /* parent is never NULL because we only call this while parent != NULL */
+
+	if (g_parent != NULL)
+		unflip(g_parent);
+	unflip(parent);
+	unflip(node);
 
 	/* Case 1 ZIG */
 	if (g_parent == NULL && (parent->right == node))
@@ -276,89 +283,86 @@ void access(LCT t, int v)
 	}	
 }
 
-/* @brief: A ideia era procurar nos left brances se existia a aresta (u, v) e devolver true, caso contrario false.
- *         Se essa aresta existisse nao podiamos fazer link entre elas. (Miguel tenta perceber se faz sentido.)
- */
-int checkLeftBranch(LCT t, int u, int v)
+LCT findRoot(LCT t, int v)
 {
-	LCT current = &t[u];
-	while (current != NULL && current->left != &t[v])
+	access(t, v);
+
+	LCT current = &t[v];
+	while (current->left != NULL)
 		current = current->left;
 
-	if (current == NULL)
-		return 1;
-
-	return 0;
+	splay(current);
+	return current;
 }
 
 /* @brief: Link entre dois nos. Nos papers e nos videos o link implica aceder aos dois nos primeiro. No entanto o
- *		   o codigo que encontrei no git nao faz isso. (Miguel tenta perceber qual das duas usar.)
-*
- *			Para Ricardo: Segundo pseudo cohdigo das teohricas link implica access aos dois. Existem mais cenas no pseudo
- *			para alem dos accesses.
- *
+ *		   o codigo que encontrei no git nao faz isso.
  *         Receives an array with all LCT nodes, int u that represents the position of the node u and int v that 
  *         represents the position of the node v.
  */
- void link(LCT t, int u, int v)
+ void link(LCT t, int v, int w)
 {
+	if (connectedQ(t, v, w))
+		return;
 
-	/* if (!checkLeftBranch(t, v, u))
-		return; */
-
+	reRoot(t, v);
 	access(t, v);
-	t[u].left = &t[v];
-	t[v].parent = &t[u];
-	t[v].pathParent = NULL;
+	access(t, w);
+	t[w].left = &t[v];
+	splay(&t[v]);
 }
 
 /* @brief: This function removes the edge (u, v) if there is one.
-*
-*			Para Ricardo: Nas teohricas ele mete apenas left(v)=Null
-*			Acho que devia ser o left(v) e não left(u) a ser cortado, para manter a ordem dos argumentos igual
-*			á do link
  *
  *         Receives an array with all LCT nodes, int u that represents the position of the node u and int v that 
  *         represents the position of the node v.
  */
 void cut(LCT t, int u, int v)
 {
-	/* first i check if its a valid edge. */
 	if (t[u].left == &t[v])
 	{
-		access(t, v);
-		if (t[v].left != NULL)
-		{
-			t[v].left->parent = NULL; /* = t[u].left = NULL */
-			t[v].left->pathParent = NULL; /* o cut e suposto mudar o pathparent? (Miguel) nos videos e papers nao
-			                                 mas no codigo do git esta assim. */
-			t[v].left = NULL;
-		}
+		access(t, u);
+		t[v].parent = NULL;
+		t[v].pathParent = NULL; 
+		t[u].left = NULL;
 	}
 }
 
-/* @brief: A minha ideia para ver se dois nos estavam ligados por um path era seguir os path parent pointers ate 
- *         achar o outro no. (faz sentido Miguel)
- *
- *			Para Ricardo: Eu não sei se a tua ideia funciona. A minha solução seria chegar ás roots das trees de ambos os
- *			nós e verificar se têm a mesma root.
- *
- *         Receives an array with all LCT nodes, int u that represents the position of the node u and int v that 
- *         represents the position of the node v.
+/*      Receives an array with all LCT nodes, int u that represents the position of the node u and int v that 
+ *      represents the position of the node v.
  */
 int connectedQ(LCT t, int u, int v)
 {
-	LCT current = t[u].parent;
+	LCT current;
 
-	while (current != NULL && current != &t[v])
-		current = current->parent;
+	reRoot(t, u);
+	access(t, v);
+	if (findRoot(t, v) == &t[u])
+		return 1;
 
-	if (current == NULL)
-		return 0;
-
-	return 1;
+	return 0;
 }
 
+void unflip(LCT node)
+{
+	LCT aux;
+
+	if (node->depth != -1)
+		return;
+
+	aux = node->left;
+	node->left = node->right;
+	node->right = aux;
+	node->right->depth = -1;
+	node->left->depth = -1;
+}
+
+void reRoot(LCT t, int v)
+{
+	access(t, v);
+	t[v].depth *= -1;
+	access(t, v);
+}
 
 /*
  * @brief: This auxiliar function is usefull for debug purpose by printing the array of LCT.
@@ -371,12 +375,13 @@ void printArray(LCT array, int size)
 	int i;
 	puts("");
 	for (i = 0; i < size; i++)
-		printf("address:%p left:%p right:%p parent:%p pathParent:%p\n", 
+		printf("address:%p left:%p right:%p parent:%p pathParent:%p flip_bit:%d\n", 
 			   &array[i], 
 			   array[i].left, 
 			   array[i].right,
 			   array[i].parent, 
-			   array[i].pathParent);
+			   array[i].pathParent,
+			   array[i].depth);
 	
 }
 
