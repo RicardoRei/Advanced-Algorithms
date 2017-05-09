@@ -23,14 +23,17 @@ typedef struct
 DynamicArray* createDynamicArray();
 void freeDynamicArray(DynamicArray * array);
 void readString(DynamicArray * array);
+
 void naiveStringMatching(char * T, int n, char * P, int m);
+
 int * computePrefixFunction(char * P, int m);
 void KMP_matcher(char * T, int n, char * P, int m);
+
 void BM_matcher(char * T, int n, char * P, int m);
 int * computeRightmost(char * P, int m);
 int * computeNTable(char * P, int m);
-int * compute_L_Prime_Table(char * P, int m, int * N);
 int * compute_l_prime_table(char * P, int m, int * N);
+int * compute_L_Prime_Table(char * P, int m, int * N);
 
 /* Auxiliar Functions */
 void printTable(int * table, int size);
@@ -43,7 +46,7 @@ int main()
 	char command;
 	DynamicArray * T = NULL;
 	DynamicArray * P = NULL;
-	
+
 	while ((command = getchar()) != 'X') /* reads the command and if its X exits the while cycle */
 	{  
         getchar(); /* reads the space after the command */
@@ -94,7 +97,7 @@ int main()
  *
  * Return: returns a pointer to that structure.
  */
-DynamicArray* createDynamicArray()
+DynamicArray * createDynamicArray()
 {
 	DynamicArray * array = (DynamicArray *) malloc(sizeof(DynamicArray));
 	array->str = (char *) malloc(sizeof(char)); /* string T is initialized with size for only 1 char */
@@ -207,8 +210,6 @@ void KMP_matcher(char * T, int n, char * P, int m)
 	int * pi = computePrefixFunction(P, m);
 	int i, q = 0, count = 0; 
 
-	printTable(pi, m);
-
 	for (i = 0; i < n ; i++)
 	{	
 		/* ++count is always true, this expression serves only to increment the counter of comparations */ 
@@ -232,7 +233,6 @@ void KMP_matcher(char * T, int n, char * P, int m)
 }
 
 /************************************************* COMMAND B ****************************************************/
-
 /*
  * @brief: Computes the rightmost ocurrences of the letters in the pattern.
  *
@@ -242,39 +242,34 @@ void KMP_matcher(char * T, int n, char * P, int m)
  */
 int * computeRightmost(char * P, int m){
 	int * rightmost =  (int *) malloc(sizeof(int) * 4); /*ATCG*/
-	int found=0;
+	int found = 0;
 	int i;
-	rightmost[0]= 0; rightmost[1]= 0; rightmost[2]= 0; rightmost[3]= 0;
+	rightmost[0] = rightmost[1] = rightmost[2] = rightmost[3] = 0;
 
-	for ( i=m-1; i>=0; i--){
-		switch (P[i]) 
+	for ( i = m-1; i >= 0; i--)
+	{
+		if (P[i] == 'A' && rightmost[0] == 0)
 		{
-	        case 'A' :
-	        	if (rightmost[0] == 0){
-	        		rightmost[0] = i+1;
-	        		found++;
-	        	}
-	        	break;
-	        case 'T':
-	        	if (rightmost[1] == 0){
-	        		rightmost[1] = i+1;
-	        		found++;
-	        	}
-	        	break;
-	        case 'C':
-	        	if (rightmost[2] == 0){
-	        		rightmost[2] = i+1;	
-	        		found++;
-	        	}
-	        	break;
-	        case 'G':
-	        	if (rightmost[3] == 0){
-	    	        rightmost[3] = i+1;
-	    	        found++;		
-	    	    }		
-	        	break;
+			rightmost[0] = i+1;
+	        found++;
 		}
-		if (found == 4)
+	    else if (P[i] == 'T' && rightmost[1] == 0)
+	    {
+	    	rightmost[1] = i+1;
+	        found++;
+	    }
+	    else if (P[i] == 'C' && rightmost[2] == 0)
+	    {
+	    	rightmost[2] = i+1;
+	    	found++;
+	    }
+	    else if (P[i] == 'G' && rightmost[3] == 0)
+	    {
+	    	rightmost[3] = i+1;
+	    	found++;
+	    }
+
+	    if (found == 4)
 			return rightmost;
 	}
 
@@ -299,19 +294,20 @@ int * computeNTable(char * P, int m)
 	for (i = 0; i < m-1; i++) 
 	{
 		for (j = i; j >= 0; j--) 
-		{
 			if (P[j] != P[m-1-i+j]) break;
-		}
+
 		N[i] = i-j;
 	}
 
 	return N;
 }
 
+
 /*
  * @brief: Computes table L'. The entry L'[i] (0 <= i < m) contains the largest index j less than n such
  *         that N[j] = |P[i..m-1]|
- *         (based on Theorem 2.2.2 from the book: Algorithms on Strings, Trees, and Sequences: Gusfield 1997.)
+ *         (based on Z-Based Boyer-Moore Algorithm from the book: Algorithms on Strings, Trees, and Sequences:
+ *          Gusfield 1997.)
  *
  * @param: P - pointer to the buffer that contains the pattern.
  *         m - the size of the pattern.
@@ -322,19 +318,18 @@ int * computeNTable(char * P, int m)
 int * compute_L_Prime_Table(char * P, int m, int * N)
 {
 	int * L_prime = (int *) malloc(sizeof(int) * m);
-	int i, j, largest_j, substring_size;
+	int i, j;
 
-	for (i = 0; i < m; i++)
+	for (i = 0; i < m ; i++)
+		L_prime[i] = 0;
+	
+	for (j = 0; j < m - 1; j++)
 	{
-		largest_j = 0;
-		substring_size = m - i; /* |p[i..n]| = n - i + 1 as defined in the book but m = n+1 in that definition*/
-
-		for (j = 0; j < m-1; j++)
-			if ((j+1) > largest_j && N[j] == substring_size)
-				largest_j = j+1;
-
-		L_prime[i] = largest_j;
+		i = m - N[j];
+		if (i >= 0 && i < m)
+			L_prime[i] = j+1;
 	}
+	
 	return L_prime;
 }
 
@@ -352,21 +347,15 @@ int * compute_L_Prime_Table(char * P, int m, int * N)
 int * compute_l_prime_table(char * P, int m, int * N)
 {
 	int * l_prime = (int *) malloc(sizeof(int) * m);
-	int i, j, largest_j, substring_size;
+	int i;
 
-	for (i = 0; i < m; i++)
-	{
-		largest_j = 0;
-		substring_size = m -i;
+	l_prime[m - 1] = (N[0] == 1) ?  1 : 0;
+	for (i = 2; i < m + 1; i++)
+		l_prime[m - i] = (N[i - 1] == i) ?  N[i - 1] : l_prime[m - i + 1];
 
-		for (j = 1; j <= substring_size; j++)
-			if (j > largest_j && N[j-1] == j)
-				largest_j = j;
-
-		l_prime[i] = largest_j;
-	}
 	return l_prime;
 }
+
 
 /*
  * @brief: Boyer Moore Algorithm based in cap 2.2.6 from Algorithms on Strings, Trees, and Sequences: Gusfield 1997.
