@@ -77,10 +77,10 @@ int main()
 	        	else 
 	        		printf("F\n");
 	        	break;
-
 	        case 'T':
 	        	printArray(vec, size);
-	        	break;
+				break;
+	        
 
 	 		default:
 	            printf("ERROR: Unknown command %c\n", command);
@@ -301,20 +301,17 @@ LCT findRoot(LCT t, int v)
  *         Receives an array with all LCT nodes, int u that represents the position of the node u and int v that 
  *         represents the position of the node v.
  */
- void link(LCT t, int v, int w)
+void link(LCT t, int v, int w)
 {
 	if (connectedQ(t, v, w)){
-		printf("They are already connected\n"); 
 		return;
 	}
 
-	reRoot(t, v);
+	reRoot(t, v); /*not in teoricas, requested in enunciado*/
 	access(t, v);
 	access(t, w);
-	t[v].left = &t[w];
-	/*t[w].parent = &t[v];  ? cpp tem este set parent?*/
-	splay(&t[v]);
-	printf("Linked nodes %d and %d\n",v+1,w+1); 
+	t[v].left = &t[w]; 
+	t[w].parent = &t[v];  
 }
 
 /* @brief: This function removes the edge (u, v) if there is one.
@@ -323,14 +320,10 @@ LCT findRoot(LCT t, int v)
  *         represents the position of the node v.
  */
 void cut(LCT t, int v, int u)
-{
-	if (t[v].left == &t[u]) /*edge exists*/
-	{
-		access(t, v);
-		/*t[v].parent = NULL;
-		t[v].pathParent = &t[u];*/ 
-		t[v].left = NULL;
-	}
+{	
+	access(t, v); 
+	t[v].left->parent = NULL;
+	t[v].left = NULL;
 }
 
 /*      Receives an array with all LCT nodes, int u that represents the position of the node u and int v that 
@@ -380,12 +373,6 @@ void reRoot(LCT t, int v)
 	access(t, v);
 }
 
-/*
- * @brief: This auxiliar function is usefull for debug purpose by printing the array of LCT.
- *
- * @param: array - The array with the LCT nodes.
- *         size - The size of the array.
- */
 void printArray(LCT array, int size)
 {
 	int i;
@@ -400,4 +387,3 @@ void printArray(LCT array, int size)
 			   array[i].depth);
 	
 }
-
