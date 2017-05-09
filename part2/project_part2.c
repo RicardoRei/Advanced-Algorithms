@@ -49,7 +49,7 @@ void printArray(LCT array, int size);
 int main()
 {
 	LCT vec = NULL;
-	int size, u, v, i;
+	int size, u, v;
 	char command;
 
 	scanf("%d\n", &size);
@@ -285,9 +285,10 @@ void access(LCT t, int v)
 
 LCT findRoot(LCT t, int v)
 {
+	LCT current = &t[v];
 	access(t, v);
 
-	LCT current = &t[v];
+	
 	while (current->left != NULL)
 		current = current->left;
 
@@ -302,14 +303,18 @@ LCT findRoot(LCT t, int v)
  */
  void link(LCT t, int v, int w)
 {
-	if (connectedQ(t, v, w))
+	if (connectedQ(t, v, w)){
+		printf("They are already connected\n"); 
 		return;
+	}
 
 	reRoot(t, v);
 	access(t, v);
 	access(t, w);
-	t[w].left = &t[v];
+	t[v].left = &t[w];
+	/*t[w].parent = &t[v];  ? cpp tem este set parent?*/
 	splay(&t[v]);
+	printf("Linked nodes %d and %d\n",v+1,w+1); 
 }
 
 /* @brief: This function removes the edge (u, v) if there is one.
@@ -317,29 +322,40 @@ LCT findRoot(LCT t, int v)
  *         Receives an array with all LCT nodes, int u that represents the position of the node u and int v that 
  *         represents the position of the node v.
  */
-void cut(LCT t, int u, int v)
+void cut(LCT t, int v, int u)
 {
-	if (t[u].left == &t[v])
+	if (t[v].left == &t[u]) /*edge exists*/
 	{
-		access(t, u);
-		t[v].parent = NULL;
-		t[v].pathParent = NULL; 
-		t[u].left = NULL;
+		access(t, v);
+		/*t[v].parent = NULL;
+		t[v].pathParent = &t[u];*/ 
+		t[v].left = NULL;
 	}
 }
 
 /*      Receives an array with all LCT nodes, int u that represents the position of the node u and int v that 
  *      represents the position of the node v.
  */
+
+ 
 int connectedQ(LCT t, int u, int v)
 {
-	LCT current;
+	/*LCT current = &t[v];*/
 
 	reRoot(t, u);
 	access(t, v);
-	if (findRoot(t, v) == &t[u])
-		return 1;
 
+
+	/*traverses preferred path*/
+	/*while (current != NULL){
+		if (current == &t[u]){
+			return 1;
+		}
+		else current = current->parent;
+	}*/
+	if (findRoot(t, v) == findRoot(t,u)){
+		return 1;
+	}
 	return 0;
 }
 
