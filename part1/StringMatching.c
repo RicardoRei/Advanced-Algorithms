@@ -222,7 +222,6 @@ void KMP_matcher(char * T, int n, char * P, int m)
 		if (q == m)
 		{
 			printf("%d ", i - m +1);
-			count += (i < n-1) ? 1 : 0;
 			q = pi[q-1];
 		}
 
