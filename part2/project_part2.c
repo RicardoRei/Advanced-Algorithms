@@ -100,7 +100,7 @@ int main()
 LCT allocLct(int V)
 {
 	int i;
-	LCT nodes = (LCT) malloc(sizeof(LCT)*V);
+	LCT nodes = (LCT) malloc(sizeof(struct LCT)*V);
 	for( i = 0; i < V; i++)
 	{
 		nodes[i].left = NULL;
@@ -231,8 +231,8 @@ LCT splayingStep(LCT node)
 	/* p(x) is a right child and x is a left child */
 	else if ((parent == g_parent->right) && (parent->left== node))
 	{
-		rotateLeft(node);
 		rotateRight(node);
+		rotateLeft(node);
 	}
 
 	return node;
@@ -304,6 +304,7 @@ LCT findRoot(LCT t, int v)
 void link(LCT t, int v, int w)
 {
 	if (connectedQ(t, v, w)){
+		printf("Trying to link connected nodes\n");
 		return;
 	}
 
@@ -321,9 +322,11 @@ void link(LCT t, int v, int w)
  */
 void cut(LCT t, int v, int u)
 {	
-	access(t, v); 
-	t[v].left->parent = NULL;
-	t[v].left = NULL;
+	if(connectedQ(t,v,u)){
+		access(t, v); 
+		t[v].left->parent = NULL;
+		t[v].left = NULL;
+	}
 }
 
 /*      Receives an array with all LCT nodes, int u that represents the position of the node u and int v that 
@@ -333,20 +336,10 @@ void cut(LCT t, int v, int u)
  
 int connectedQ(LCT t, int u, int v)
 {
-	/*LCT current = &t[v];*/
-
 	reRoot(t, u);
 	access(t, v);
 
-
-	/*traverses preferred path*/
-	/*while (current != NULL){
-		if (current == &t[u]){
-			return 1;
-		}
-		else current = current->parent;
-	}*/
-	if (findRoot(t, v) == findRoot(t,u)){
+	if (findRoot(t, v) == &t[u]){
 		return 1;
 	}
 	return 0;
@@ -362,8 +355,10 @@ void unflip(LCT node)
 	aux = node->left;
 	node->left = node->right;
 	node->right = aux;
-	node->right->depth = -1;
-	node->left->depth = -1;
+	if (node->right != NULL)
+		node->right->depth = -1;
+	if (node->left != NULL)
+		node->left->depth = -1;
 }
 
 void reRoot(LCT t, int v)
