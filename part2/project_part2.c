@@ -43,6 +43,7 @@ void reRoot(LCT t, int v);
 /* Auxiliar funtions */
 void unflip(LCT node);
 void printArray(LCT array, int size);
+void inOrder(LCT node);
 /*****************************************************************************************************************/
 
 
@@ -123,61 +124,87 @@ void freeLCT(LCT t)
 /* @brief: Function that rotates a specific node to the right. 
  *		   Receives a pointer to that node.
  */
-void rotateRight(LCT node)
+void rotateRight(LCT y)
 {
-	LCT parent = node->parent;
-	LCT g_parent = NULL;
-	if (parent == NULL) return; /* node is already the root */
+  	LCT t;
+	printf("Antes rotateRight\n");
+	inOrder(y);
+	LCT x = y->left;
+	LCT z = y->parent;
 
-	g_parent = parent->parent;
-	parent->left = node->right;
+	if (z != NULL){
+		if (z->right == y)
+			z->right = x;
+		else
+			z->left = x;
+    }
+    t = x->right;
+	x->right = y;
+	y->left = t;
 
-	if (node->right != NULL)
-		node->right->parent = parent;
+	x->parent = z;
+	y->parent = x;
 
-	node->right = parent;
-	parent->parent = node;
-	node->parent = g_parent;
-
-	if (g_parent != NULL)
-	{
-		if (g_parent->right == parent) g_parent->right = node; 
-		else g_parent->left = node;
+	if (y->left != NULL){
+		y->left->parent = y;
 	}
-	
 
-	node->pathParent = parent->pathParent;
-	parent->pathParent = NULL;
+    if(NULL != z){	/* code part to maintain our path pointers */	
+        y->pathParent = z->pathParent;
+        z->pathParent = NULL;
+    }
+
+	printf("Depois rotateRight\n");
+	inOrder(y);
 }
+
 
 /* @brief: Function that rotates a specific node to the left. 
  *		   Receives a pointer to that node.
  */
-void rotateLeft(LCT node)
+void rotateLeft(LCT y)
 {
-	LCT parent = node->parent;
-	LCT g_parent = NULL;
-	if (parent == NULL) return; /* node is already the root */
+	LCT t;
+	printf("Antes rotateLeft\n");
+	inOrder(y);
+	LCT x = y->right;
+	LCT z = y->parent;
 
-	g_parent = parent->parent;
-	parent->right = node->left;
-
-	if (node->left != NULL)
-		node->left->parent = parent;
-
-	node->left = parent;
-	parent->parent = node;
-	node->parent = g_parent;
-
-	if (g_parent != NULL)
-	{
-		if (g_parent->left == parent) g_parent->left = node; 
-		else g_parent->right = node;
-	}	
+	if (z != NULL){
+		if (z->left == y)
+			z->left = x;
+		else
+			z->right = x;
+	}
+	t = x->left;
+	x->left = y;
+	y->right = t;
 	
-	/* code part to maintain our path pointers */	
-	node->pathParent = parent->pathParent;
-	parent->pathParent = NULL;
+	x->parent = z;
+	y->parent = x;
+
+	if (y->right != NULL)
+		y->right->parent = y;
+
+
+	if(NULL != z){	/* code part to maintain our path pointers */	
+        y->pathParent = z->pathParent;
+        z->pathParent = NULL;
+    }
+
+	printf("Depois rotateLeft\n");
+	inOrder(y);
+}
+
+void inOrder(LCT node){
+
+	if (node->left)
+		inOrder(node->left);
+
+	printf("%p \n", (void *)node);
+	if(node->right)
+		inOrder(node->right); 
+
 }
 
 /* @brief: Splays a node according to the definition of the splaying step from "Self Adjusting Binary Search Trees"
@@ -197,13 +224,15 @@ LCT splayingStep(LCT node)
 
 	/* Case 1 ZIG */
 	if (g_parent == NULL && (parent->right == node))
-	{
-		rotateLeft(node);
+	{	
+		printf("1\n");
+		rotateLeft(parent);
 		return node;
 	}
 	else if (g_parent == NULL && (parent->left == node))
 	{
-		rotateRight(node);
+		printf("2\n");
+		rotateRight(parent);
 		return node;	
 	}
 
@@ -211,28 +240,33 @@ LCT splayingStep(LCT node)
 	/* if both x and p(x) are left childs */
 	if ((parent == g_parent->left) && (parent->left == node))
 	{
+		printf("3\n");
+		rotateRight(g_parent);
 		rotateRight(parent);
-		rotateRight(node);
-	}
-	/* if both x and p(x) are right childs */
-	else if ((parent == g_parent->right) && (parent->right == node))
-	{
-		rotateLeft(parent);
-		rotateLeft(node);
 	}
 
 	/* Case 3 ZIG - ZAG */
 	/* p(x) is a left child and x is a right child */
 	else if ((parent == g_parent->left) && (parent->right== node))
+	{	
+		printf("4\n");
+		rotateLeft(parent);
+		rotateRight(g_parent);
+	}
+
+	/* if both x and p(x) are right childs */
+	else if ((parent == g_parent->right) && (parent->right == node))
 	{
-		rotateLeft(node);
-		rotateRight(node);
+		printf("5\n");
+		rotateLeft(g_parent);
+		rotateLeft(parent);
 	}
 	/* p(x) is a right child and x is a left child */
 	else if ((parent == g_parent->right) && (parent->left== node))
-	{
-		rotateRight(node);
-		rotateLeft(node);
+	{	
+		printf("6\n");
+		rotateRight(parent);
+		rotateLeft(g_parent);
 	}
 
 	return node;
@@ -244,7 +278,8 @@ LCT splayingStep(LCT node)
 LCT splay(LCT node)
 {
 	if (node != NULL)
-		while (node->parent != NULL) node = splayingStep(node);
+		while (node->parent != NULL) 
+			node = splayingStep(node);
 	return node;
 }
 
