@@ -35,13 +35,13 @@ void access(LCT t, int v);
 void link(LCT t, int u, int v);
 void cut(LCT t, int u, int v);
 int connectedQ(LCT t, int u, int v);
-int checkPrefPath(LCT t, int u, int v);
 void reRoot(LCT t, int v);
 
 /* Auxiliar funtions */
 void unflip(LCT node);
-void printArray(LCT array, int size);
-void inOrder(LCT node);
+int checkPrefPath(LCT t, int u, int v);
+/* presentation auxiliar function */
+void printArray(LCT array, int size); 
 
 /*****************************************************************************************************************/
 
@@ -77,10 +77,6 @@ int main()
 	        	else 
 	        		printf("F\n");
 	        	break;
-
-	        case 'T':
-	        	printArray(vec, size);
-				break;
 	    
 	 		default:
 	            printf("ERROR: Unknown command %c\n", command);
@@ -133,11 +129,7 @@ void rotateRight(LCT node)
  	if (parent->hook != NULL)
  	{
  		node->hook = parent->hook;
-
- 		if (node->hook->left == parent)
- 			node->hook->left = node;
- 		else
- 			node->hook->right = node;
+ 		((node->hook->left == parent) ? (node->hook->left = node) : (node->hook->right = node));
  	}
  	else
  		node->hook = NULL;
@@ -165,11 +157,7 @@ void rotateLeft(LCT node)
 	if (parent->hook != NULL)
 	{
 		node->hook = parent->hook;
-
-		if (node->hook->left == parent)
-			node->hook->left = node;
-		else 
-			node->hook->right = node;
+		((node->hook->left == parent) ? (node->hook->left = node) : (node->hook->right = node));
 	}
 	else
 		node->hook = NULL;
@@ -191,7 +179,7 @@ void splayingStep(LCT node)
 {
 	LCT parent = node->hook;
 	LCT g_parent = parent->hook; /* parent is never NULL because we only call this while parent != NULL */
-	
+
 	if (g_parent != NULL)
 		unflip(g_parent);
 	unflip(parent);
@@ -202,7 +190,7 @@ void splayingStep(LCT node)
 		rotateLeft(node);
 
 	else if (g_parent == NULL && (parent->left == node))
-		rotateRight(node);	
+		rotateRight(node);
 
 	/* Case 2 ZIG - ZIG */
 	/* if both x and p(x) are left childs */
@@ -230,6 +218,12 @@ void splayingStep(LCT node)
 		rotateRight(node);
 		rotateLeft(node);
 	}
+	/* In the context of this project g_parent can be != NULL because its a pathparent*/
+	else if (parent->right == node)
+		rotateLeft(node);
+
+	else if (parent->left == node)
+		rotateRight(node);
 }
 
 /* @brief: Performs several Splays to a node until the node is made the root of his aux tree.
@@ -249,7 +243,6 @@ void splay(LCT node)
 		}
 			
 }
-
 
 /* @brief: Function that accesses a node, this function should change the represented tree in order to made
  *         the path from the root to node v the prefered path.
@@ -281,12 +274,11 @@ void access(LCT t, int v)
 void link(LCT t, int v, int w)
 {
 	/* specific part for this project */
-	if (connectedQ(t, v, w)){
-		printf("connected nodes\n");
+	if (connectedQ(t, v, w))
 		return;
-	}
+
 	reRoot(t, v);
-	
+
 	/* actual link operations */
 	access(t, v);
 	access(t, w);
@@ -304,8 +296,10 @@ void cut(LCT t, int u, int v)
 	if(connectedQ(t, u, v))
 	{
 		reRoot(t, u);
-		access(t, v); 
-		t[v].left->hook = NULL;
+		access(t, v);
+		if (t[v].left != NULL)
+			t[v].left->hook = NULL;
+		
 		t[v].left = NULL;
 	}
 }
@@ -344,6 +338,7 @@ void unflip(LCT node)
 		node->right->sum = -1;
 	if (node->left != NULL)
 		node->left->sum = -1;
+	node->sum = 1;
 }
 
 void reRoot(LCT t, int v)
@@ -363,6 +358,5 @@ void printArray(LCT array, int size)
 			   (void *)array[i].left, 
 			   (void *)array[i].right,
 			   (void *)array[i].hook,
-			   array[i].sum);
-	
+			   array[i].sum);	
 }
