@@ -25,7 +25,7 @@ int main(int argc,  char* argv[])
 	{
 		op = rand()%(100+1);
 		n1 = rand()%(n_nodes+1);
-		n2 = rand()%(n_nodes+1);
+		while ((n2 = rand()%(n_nodes+1)) == n1);
 
 		if (op <= l_percent)
 			fprintf(fp, "%c %d %d\n", 'L', n1, n2);
