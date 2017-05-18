@@ -16,7 +16,7 @@ struct LCT {
 };
 
 /************************************************** NOTE ********************************************************/
-/*  In this code i compare pointers with each others, this is only safe because in this project every node      */
+/*  In this code we compare pointers with each others, this is only safe because in this project every node     */
 /*  belongs to the same array allocated in the begin of main. 											        */
 /****************************************************************************************************************/
 
@@ -40,24 +40,20 @@ void reRoot(LCT t, int v);
 /* Auxiliar funtions */
 void unflip(LCT node);
 int checkPrefPath(LCT t, int u, int v);
-/* presentation auxiliar function */
-void printArray(LCT array, int size); 
 
 /*****************************************************************************************************************/
-
-
 int main()
 {
 	LCT vec = NULL;
 	int size, u, v;
-	char command;
+	int command;
 
 	scanf("%d\n", &size);
-	vec = allocLct(size);
 
-	while ((command = getchar()) != 'X') /* reads the command and if its X exits the while cycle */
+	vec = allocLct(size);
+	while ((command = getchar()) != 'X' && EOF != command) /* reads the command and if its X exits the while cycle */
 	{  
-        
+        getchar(); /* reads space after command */
         switch (command) 
         {
 	        case 'L':
@@ -72,16 +68,12 @@ int main()
 
 	        case 'Q':
 	        	scanf("%d %d", &u, &v);
-	        	if (connectedQ(vec, u-1, v-1))
-	        		printf("T\n");
-	        	else 
-	        		printf("F\n");
+	        	(connectedQ(vec, u-1, v-1)) ? printf("T\n") : printf("F\n");
 	        	break;
 	    
 	 		default:
-	            printf("ERROR: Unknown command %c\n", command);
+	            printf("ERROR: Unknown command %d\n",(int)command);
 	    }
-
 	    getchar(); /* reads the \n */
     }
 
@@ -129,7 +121,9 @@ void rotateRight(LCT node)
  	if (parent->hook != NULL)
  	{
  		node->hook = parent->hook;
- 		((node->hook->left == parent) ? (node->hook->left = node) : (node->hook->right = node));
+ 		/* conditions for the path parent hooks */
+ 		if (node->hook->left == parent) node->hook->left = node; 
+ 		if (node->hook->right == parent) node->hook->right = node;
  	}
  	else
  		node->hook = NULL;
@@ -153,11 +147,13 @@ void rotateLeft(LCT node)
 	if (node == NULL || parent == NULL || parent->right != node)
 		return;
 
-	/* switch parent hook ith node hook (equal in rotate right)*/
+	/* switch parent hook with node hook (equal in rotate right)*/
 	if (parent->hook != NULL)
 	{
 		node->hook = parent->hook;
-		((node->hook->left == parent) ? (node->hook->left = node) : (node->hook->right = node));
+		/* conditions for the path parent hooks */
+		if (node->hook->left == parent) node->hook->left = node;
+		if (node->hook->right == parent) node->hook->right = node;
 	}
 	else
 		node->hook = NULL;
@@ -170,8 +166,8 @@ void rotateLeft(LCT node)
 	parent->hook = node;
 }
 
-/* @brief: Splays a node according to the definition of the splaying step from "Self Adjusting Binary Search Trees"
- *         from Sleator and Tarjan.
+/* @brief: Splays a node according to the definition of the splaying step from paper "Self Adjusting Binary Search 
+ *         Trees" from Sleator and Tarjan.
  * 
  *		   Receives a pointer to that node.
  */
@@ -232,20 +228,26 @@ void splayingStep(LCT node)
 void splay(LCT node)
 {
 	if (node != NULL)
+	{
+		/* unflip nodes */
+		unflip(node);
+
 		/* While hook =! NULL or node hook doesnt point back to node */
 		while (1)
 		{
 			if (node->hook == NULL) break;
-			
+
 			else if (node->hook->left != node && node->hook->right != node) break;
 			
 			else splayingStep(node);
 		}
-			
+	}		
 }
 
 /* @brief: Function that accesses a node, this function should change the represented tree in order to made
  *         the path from the root to node v the prefered path.
+ *         This function was defined according with whats defined in "A Data Structure for Dynamic trees" paper
+ *         from Sleator and Tarjan.
  *
  *         Receives an array with all LCT nodes and a int v that represents the position of the node we want
  *         to access in that array.
@@ -266,44 +268,49 @@ void access(LCT t, int v)
 	}
 }
 
-/* @brief: Link entre dois nos. Nos papers e nos videos o link implica aceder aos dois nos primeiro. No entanto o
- *		   o codigo que encontrei no git nao faz isso.
- *         Receives an array with all LCT nodes, int u that represents the position of the node u and int v that 
- *         represents the position of the node v.
- */
-void link(LCT t, int v, int w)
-{
-	/* specific part for this project */
-	if (connectedQ(t, v, w))
-		return;
-
-	reRoot(t, v);
-
-	/* actual link operations */
-	access(t, v);
-	access(t, w);
-	t[v].left = &t[w]; 
-	t[w].hook = &t[v];  
-}
-
-/* @brief: This function removes the edge (u, v) if there is one.
+/* @brief: Adds the edge from r to v to the represented tree. Before linking the node r is made the root of 
+ *         its represented tree.
  *
  *         Receives an array with all LCT nodes, int u that represents the position of the node u and int v that 
  *         represents the position of the node v.
  */
-void cut(LCT t, int u, int v)
+void link(LCT t, int r, int v)
+{
+	/* specific part for this project */
+	if (connectedQ(t, r, v))
+		return;
+	
+	reRoot(t, r);
+	/* actual link operations */
+	access(t, v);
+	t[r].left = &t[v]; 
+	t[v].hook = &t[r];  
+}
+
+/* @brief: This function removes the edge (u, v).
+ *
+ *         Receives an array with all LCT nodes, int u that represents the position of the node u and int v that 
+ *         represents the position of the node v.
+ */
+void cut(LCT t, int r, int v)
 {	
-	if(connectedQ(t, u, v))
+	/* specific part for this project */
+	reRoot(t, r);
+	/* actual link operations */
+	access(t, v);
+	if (t[v].left == &t[r] && t[r].right == NULL)
 	{
-		reRoot(t, u);
-		access(t, v);
-		if (t[v].left != NULL)
-			t[v].left->hook = NULL;
-		
+		t[v].left->hook = NULL;
 		t[v].left = NULL;
 	}
 }
 
+/* @brief: This function checks if a node u and a node v are in the same path. We assume that node u has a depth 
+ *         higher than v.
+ *
+ *         Receives an array with all LCT nodes, int u that represents the position of the node u and int v that 
+ *         represents the position of the node v.
+ */
 int checkPrefPath(LCT t, int u, int v)
 {
 	LCT current = &t[u];
@@ -317,13 +324,22 @@ int checkPrefPath(LCT t, int u, int v)
 	return 0;
 }
 
+/* @brief: Funtion that verifies if there is a path between a node u and a node v.
+ *
+ *         Receives an array with all LCT nodes, int u that represents the position of the node u and int v that 
+ *         represents the position of the node v.
+ */
 int connectedQ(LCT t, int u, int v)
 {
 	reRoot(t, u);
 	access(t, v);
-	return (checkPrefPath(t, u, v)) ? 1 : 0;
+	return checkPrefPath(t, u, v);
 }
 
+/* @brief: Funtion that unflips a node if he is fliped.
+ *
+ *         Receives the node we want to unflip.
+ */
 void unflip(LCT node)
 {
 	LCT aux;
@@ -331,32 +347,27 @@ void unflip(LCT node)
 	if (node->sum != -1)
 		return;
 
+	/* switch right with left */
 	aux = node->left;
 	node->left = node->right;
 	node->right = aux;
+
+	/* flip right and left childs bits */
 	if (node->right != NULL)
-		node->right->sum = -1;
+		node->right->sum *= -1;
 	if (node->left != NULL)
-		node->left->sum = -1;
+		node->left->sum *= -1;
+	/* restore sum bit */
 	node->sum = 1;
 }
 
+/* @brief: Funtion that makes v the root of the represented tree.
+ *
+ *         Receives an array with all LCT nodes, int v that represents the node we want to make the root.
+ */
 void reRoot(LCT t, int v)
 {
 	access(t, v);
-	t[v].sum *= -1;
+	t[v].sum *= -1; /* invert node */
 	access(t, v);
-}
-
-void printArray(LCT array, int size)
-{
-	int i;
-	puts("");
-	for (i = 0; i < size; i++)
-		printf("address:%p left:%p right:%p hook:%p flip_bit:%d\n", 
-			   (void *)&array[i], 
-			   (void *)array[i].left, 
-			   (void *)array[i].right,
-			   (void *)array[i].hook,
-			   array[i].sum);	
 }
