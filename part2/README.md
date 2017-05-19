@@ -1,4 +1,4 @@
-# Project Title
+# Link Cut Tree API
 
 This is the second part of the Advanced Algorithms and Datastructures Course project. The project consisted in developing and API that uses Link-Cut Trees in order to maintain the connectivity information of an underlying forest. You can read the LCT_report.pdf for more info.
 
