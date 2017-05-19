@@ -10,5 +10,5 @@ gcc -ansi -Wall -pedantic -o test StringMatching.c
 after the code is compiled you just need to run the following command in you shell: ./test
 
 ## Authors
-Ricardo Rei
+Ricardo Rei and
 Miguel Carvalho
