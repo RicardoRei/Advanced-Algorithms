@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 typedef struct LCT *LCT;
 
@@ -47,7 +48,8 @@ int main()
 	LCT vec = NULL;
 	int size, u, v;
 	int command;
-
+	clock_t begin, end;
+	double sum = 0;
 	scanf("%d\n", &size);
 
 	vec = allocLct(size);
@@ -57,13 +59,24 @@ int main()
         switch (command) 
         {
 	        case 'L':
+
 	        	scanf("%d %d",&u, &v);
+
+	        	begin = clock();
 	        	link(vec, u-1, v-1);
+	        	end = clock();
+
+	        	sum += (double)(end - begin) / CLOCKS_PER_SEC;
 	        	break;
 
 	        case 'C':
 	        	scanf("%d %d",&u, &v);
+
+	        	begin = clock();
 	        	cut(vec, u-1, v-1);
+	        	end = clock();
+
+	        	sum += (double)(end - begin) / CLOCKS_PER_SEC;
 	        	break;
 
 	        case 'Q':
@@ -79,6 +92,7 @@ int main()
 
     if (vec != NULL) freeLCT(vec); 
 
+    printf("Amortized execution time: %f\n", sum);
 	return EXIT_SUCCESS;
 }
 

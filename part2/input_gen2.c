@@ -24,13 +24,13 @@ int main(int argc,  char* argv[])
 	while (count < n_ops)
 	{
 		op = rand()%(100+1);
-		n1 = rand()%(n_nodes+1);
-		while ((n2 = rand()%(n_nodes+1)) == n1);
+		n1 = rand()%(n_nodes);
+		while ((n2 = rand()%(n_nodes)) == n1);
 
 		if (op <= l_percent)
-			fprintf(fp, "%c %d %d\n", 'L', n1, n2);
+			fprintf(fp, "%c %d %d\n", 'L', n1+1, n2+1);
 		else
-			fprintf(fp, "%c %d %d\n", 'C', n1, n2);
+			fprintf(fp, "%c %d %d\n", 'C', n1+1, n2+1);
 
 		count++;
 	}
